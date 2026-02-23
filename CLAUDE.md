@@ -114,6 +114,46 @@ Test configuration:
 - Redis 7.0 (master-replica), Kafka 3.5.1 (KRaft mode)
 - JUnit 5, Mockito, SpringMockK, Instancio, TestContainers
 
+## 도메인 & 객체 설계 전략
+
+### Entity / VO / Domain Service 책임 분리
+- **Entity** (extends `BaseEntity`): 식별자를 가진 도메인 객체. 생성자에서 불변식 검증, `guard()`는 JPA persist/update 시점 재검증
+- **Value Object** (`@Embeddable`): 값으로 비교되는 불변 객체. `equals/hashCode` 필수 구현, `@NoArgsConstructor(access = PROTECTED)`
+- **Domain Service** (`@Component`): 단일 Aggregate 내 비즈니스 규칙 수행. Repository 인터페이스에 의존 (DIP)
+- **Facade** (`@Component`, application 레이어): 여러 Domain Service 조합, Info DTO 변환. 트랜잭션은 Domain Service에 위임
+
+### 네이밍 규칙
+- Entity: `{Domain}Model` (e.g., `ProductModel`, `BrandModel`)
+- Repository Interface: `{Domain}Repository` (domain 패키지)
+- Repository Impl: `{Domain}RepositoryImpl` (infrastructure 패키지)
+- JPA Repository: `{Domain}JpaRepository` (infrastructure 패키지)
+- Service: `{Domain}Service` (domain 패키지, `@Component`)
+- Facade: `{Domain}Facade` (application 패키지, `@Component`)
+- Info DTO: `{Domain}Info` (application 패키지, record)
+- API DTO: `{Domain}V1Dto` (interfaces 패키지, 외부 class + 내부 record)
+- API Spec: `{Domain}V1ApiSpec` / `{Domain}AdminV1ApiSpec` (Swagger interface)
+
+## 아키텍처 & 패키지 구성 전략
+
+### 레이어드 아키텍처 + DIP
+```
+interfaces/api/ → application/ → domain/ ← infrastructure/
+```
+- domain 레이어는 외부 의존 없음 (Repository는 interface만 정의)
+- infrastructure가 domain의 Repository interface를 구현
+- application은 domain service를 조합하여 유스케이스 수행
+
+### 패키지 구조 (apps/commerce-api 기준)
+```
+com.loopers/
+├── interfaces/api/{domain}/   # Controller, ApiSpec, Dto
+├── application/{domain}/      # Facade, Info, Command
+├── domain/{domain}/           # Model, Repository(interface), Service, VO, Enum
+├── infrastructure/{domain}/   # JpaRepository, RepositoryImpl
+├── config/                    # Spring Configuration
+└── support/                   # Error, Util
+```
+
 ## 개발 규칙
 ### 진행 Workflow - 증강 코딩
 - **대원칙** : 방향성 및 주요 의사 결정은 개발자에게 제안만 할 수 있으며, 최종 승인된 사항을 기반으로 작업을 수행.
