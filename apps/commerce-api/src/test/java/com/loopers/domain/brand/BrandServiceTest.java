@@ -1,5 +1,8 @@
 package com.loopers.domain.brand;
 
+import com.loopers.domain.product.ProductModel;
+import com.loopers.domain.product.Money;
+import com.loopers.domain.product.ProductRepository;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,11 +34,14 @@ class BrandServiceTest {
     @Mock
     private BrandRepository brandRepository;
 
+    @Mock
+    private ProductRepository productRepository;
+
     private BrandService brandService;
 
     @BeforeEach
     void setUp() {
-        brandService = new BrandService(brandRepository);
+        brandService = new BrandService(brandRepository, productRepository);
     }
 
     @DisplayName("브랜드 등록")
@@ -241,12 +247,35 @@ class BrandServiceTest {
             Long brandId = 1L;
             BrandModel brand = new BrandModel(new BrandName("나이키"), "스포츠 브랜드");
             when(brandRepository.findById(brandId)).thenReturn(Optional.of(brand));
+            when(productRepository.findAllByBrandId(brandId)).thenReturn(List.of());
 
             // when
             brandService.delete(brandId);
 
             // then
             assertThat(brand.getDeletedAt()).isNotNull();
+        }
+
+        @DisplayName("삭제 시 소속 상품도 연쇄 soft delete 한다")
+        @Test
+        void cascadeSoftDeletesProducts() {
+            // given
+            Long brandId = 1L;
+            BrandModel brand = new BrandModel(new BrandName("나이키"), "스포츠 브랜드");
+            ProductModel product1 = new ProductModel("에어맥스 90", "러닝화", new Money(129000), brandId);
+            ProductModel product2 = new ProductModel("에어맥스 95", "러닝화", new Money(159000), brandId);
+            when(brandRepository.findById(brandId)).thenReturn(Optional.of(brand));
+            when(productRepository.findAllByBrandId(brandId)).thenReturn(List.of(product1, product2));
+
+            // when
+            brandService.delete(brandId);
+
+            // then
+            assertAll(
+                () -> assertThat(brand.getDeletedAt()).isNotNull(),
+                () -> assertThat(product1.getDeletedAt()).isNotNull(),
+                () -> assertThat(product2.getDeletedAt()).isNotNull()
+            );
         }
 
         @DisplayName("미존재 브랜드면 NOT_FOUND 예외를 던진다")

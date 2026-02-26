@@ -1,5 +1,7 @@
 package com.loopers.domain.brand;
 
+import com.loopers.domain.product.ProductModel;
+import com.loopers.domain.product.ProductRepository;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
@@ -8,11 +10,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @RequiredArgsConstructor
 @Component
 public class BrandService {
 
     private final BrandRepository brandRepository;
+    private final ProductRepository productRepository;
 
     @Transactional
     public BrandModel register(String name, String description) {
@@ -59,6 +64,9 @@ public class BrandService {
     public void delete(Long brandId) {
         BrandModel brand = findById(brandId);
         brand.delete();
+
+        List<ProductModel> products = productRepository.findAllByBrandId(brandId);
+        products.forEach(ProductModel::delete);
     }
 
     @Transactional(readOnly = true)
