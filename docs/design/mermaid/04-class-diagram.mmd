@@ -1,7 +1,7 @@
 classDiagram
     direction LR
 
-    namespace Brand {
+    namespace Catalog {
         class BrandName {
             <<Embeddable>>
             -String value
@@ -13,9 +13,6 @@ classDiagram
         class BrandFacade {
             삭제 시 상품 연쇄 soft delete
         }
-    }
-
-    namespace Product {
         class Money {
             <<Embeddable>>
             -int value

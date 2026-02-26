@@ -14,19 +14,20 @@
 
 ---
 
-## 2. Brand 도메인
+## 2. 카탈로그 BC (Brand + Product + Stock)
+
+> 비즈니스 관심사: "판매할 상품 카탈로그를 관리한다"
+> 브랜드 삭제 → 소속 상품 연쇄 soft delete가 하나의 트랜잭션으로 처리되므로 같은 BC에 속한다.
+
+### Brand (어그리게이트)
 
 | 용어 | 타입 | 설명 |
 |------|------|------|
 | **BrandModel** | Entity | 브랜드 엔티티. BaseEntity 상속. name(BrandName VO) + description |
 | **BrandName** | @Embeddable VO | 브랜드명 값 객체. 유니크 제약, 빈값 불가, `value()` 접근자 |
 | **BrandService** | Domain Service | 단일 도메인 로직. CRUD, 브랜드명 유니크 검증 |
-| **BrandFacade** | Application Facade | 유스케이스 조합. 삭제 시 소속 상품 연쇄 soft delete |
-| **브랜드 삭제 연쇄** | 비즈니스 규칙 | 브랜드 삭제 → 소속 상품 전체 soft delete. 하나의 트랜잭션 (Q1) |
 
----
-
-## 3. Product 도메인
+### Product (어그리게이트)
 
 | 용어 | 타입 | 설명 |
 |------|------|------|
@@ -36,12 +37,21 @@
 | **StockStatus** | 표시 상태 | 고객에게 보여주는 재고 상태. IN_STOCK(>10), LOW_STOCK(1~10), OUT_OF_STOCK(0) |
 | **ProductService** | Domain Service | 상품 CRUD, likeCount 증감, soft delete |
 | **StockService** | Domain Service | 재고 생성, 조회, 차감(`checkAndDecrease`) |
-| **ProductFacade** | Application Facade | 상품 + Stock 동시 생성, 브랜드 존재 확인 |
 | **initialStock** | 요청 파라미터 | 상품 등록 시 초기 재고 수량 |
+
+### Application Layer
+
+| 용어 | 타입 | 설명 |
+|------|------|------|
+| **BrandFacade** | Application Facade | 유스케이스 조합. 삭제 시 소속 상품 연쇄 soft delete |
+| **ProductFacade** | Application Facade | 상품 + Stock 동시 생성, 브랜드 존재 확인 |
+| **브랜드 삭제 연쇄** | 비즈니스 규칙 | 브랜드 삭제 → 소속 상품 전체 soft delete. 하나의 트랜잭션 (Q1) |
 
 ---
 
-## 4. Like 도메인
+## 3. 좋아요 BC (Like)
+
+> 비즈니스 관심사: "고객의 상품 선호를 추적한다"
 
 | 용어 | 타입 | 설명 |
 |------|------|------|
@@ -53,7 +63,9 @@
 
 ---
 
-## 5. Order 도메인
+## 4. 주문 BC (Order)
+
+> 비즈니스 관심사: "주문 이력을 기록하고 관리한다"
 
 | 용어 | 타입 | 설명 |
 |------|------|------|
@@ -67,7 +79,7 @@
 
 ---
 
-## 6. 공통 패턴
+## 5. 공통 패턴
 
 ### 6.1 엔티티 기반
 
