@@ -19,6 +19,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -27,6 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class ProductServiceTest {
@@ -311,6 +313,83 @@ class ProductServiceTest {
 
             // then
             assertThat(product.getDeletedAt()).isNotNull();
+        }
+    }
+
+    @DisplayName("상품 배치 조회")
+    @Nested
+    class GetProductsByIds {
+
+        @DisplayName("ID 목록으로 미삭제 상품을 Map으로 반환한다")
+        @Test
+        void returnsMapOfProducts() {
+            // given
+            List<Long> productIds = List.of(1L, 2L);
+            ProductModel product1 = new ProductModel("에어맥스", "러닝화", new Money(129000), 1L);
+            ReflectionTestUtils.setField(product1, "id", 1L);
+            ProductModel product2 = new ProductModel("조던", "농구화", new Money(159000), 1L);
+            ReflectionTestUtils.setField(product2, "id", 2L);
+            when(productRepository.findAllByIdInAndDeletedAtIsNull(productIds))
+                .thenReturn(List.of(product1, product2));
+
+            // when
+            Map<Long, ProductModel> result = productService.getProductsByIds(productIds);
+
+            // then
+            assertAll(
+                () -> assertThat(result).hasSize(2),
+                () -> assertThat(result.get(1L).name()).isEqualTo("에어맥스"),
+                () -> assertThat(result.get(2L).name()).isEqualTo("조던")
+            );
+        }
+
+        @DisplayName("삭제된 상품은 제외된다")
+        @Test
+        void excludesDeletedProducts() {
+            // given
+            List<Long> productIds = List.of(1L, 2L);
+            ProductModel product1 = new ProductModel("에어맥스", "러닝화", new Money(129000), 1L);
+            ReflectionTestUtils.setField(product1, "id", 1L);
+            when(productRepository.findAllByIdInAndDeletedAtIsNull(productIds))
+                .thenReturn(List.of(product1));
+
+            // when
+            Map<Long, ProductModel> result = productService.getProductsByIds(productIds);
+
+            // then
+            assertAll(
+                () -> assertThat(result).hasSize(1),
+                () -> assertThat(result).containsKey(1L),
+                () -> assertThat(result).doesNotContainKey(2L)
+            );
+        }
+    }
+
+    @DisplayName("브랜드명 배치 조회")
+    @Nested
+    class GetBrandNamesByIds {
+
+        @DisplayName("브랜드 ID 목록으로 브랜드명 Map을 반환한다")
+        @Test
+        void returnsMapOfBrandNames() {
+            // given
+            List<Long> brandIds = List.of(1L, 2L);
+            BrandModel brand1 = new BrandModel(new BrandName("나이키"), "스포츠");
+            ReflectionTestUtils.setField(brand1, "id", 1L);
+            BrandModel brand2 = new BrandModel(new BrandName("아디다스"), "스포츠");
+            ReflectionTestUtils.setField(brand2, "id", 2L);
+            when(brandRepository.findAllByIdIn(brandIds))
+                .thenReturn(List.of(brand1, brand2));
+
+            // when
+            Map<Long, String> result = productService.getBrandNamesByIds(brandIds);
+
+            // then
+            assertAll(
+                () -> assertThat(result).hasSize(2),
+                () -> assertThat(result.get(1L)).isEqualTo("나이키"),
+                () -> assertThat(result.get(2L)).isEqualTo("아디다스")
+            );
         }
     }
 

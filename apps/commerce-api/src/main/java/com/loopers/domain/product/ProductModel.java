@@ -60,4 +60,14 @@ public class ProductModel extends BaseEntity {
     public int likeCount() {
         return likeCount;
     }
+
+    public void incrementLikeCount() {
+        this.likeCount++;
+    }
+
+    public void decrementLikeCount() {
+        if (this.likeCount > 0) {
+            this.likeCount--;
+        }
+    }
 }

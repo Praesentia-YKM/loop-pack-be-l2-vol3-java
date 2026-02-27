@@ -13,6 +13,8 @@ import java.util.Objects;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Money {
 
+    public static final Money ZERO = new Money(0);
+
     @Column(name = "price", nullable = false)
     private int value;
 
