@@ -10,6 +10,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Component
@@ -71,6 +74,13 @@ public class ProductService {
     public void deleteAllByBrandId(Long brandId) {
         List<ProductModel> products = productRepository.findAllByBrandId(brandId);
         products.forEach(ProductModel::delete);
+    }
+
+    @Transactional(readOnly = true)
+    public Map<Long, ProductModel> getProductsByIds(List<Long> productIds) {
+        return productRepository.findAllByIdInAndDeletedAtIsNull(productIds)
+            .stream()
+            .collect(Collectors.toMap(ProductModel::getId, Function.identity()));
     }
 
     private ProductModel findById(Long productId) {
