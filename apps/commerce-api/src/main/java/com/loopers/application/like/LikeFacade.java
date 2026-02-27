@@ -51,4 +51,13 @@ public class LikeFacade {
     public Page<LikeModel> getMyLikes(Long userId, Pageable pageable) {
         return likeService.getMyLikes(userId, pageable);
     }
+
+    @Transactional(readOnly = true)
+    public Page<LikeWithProduct> getMyLikesWithProducts(Long userId, Pageable pageable) {
+        Page<LikeModel> likes = likeService.getMyLikes(userId, pageable);
+        return likes.map(like -> {
+            ProductModel product = productService.getProduct(like.productId());
+            return new LikeWithProduct(like, product);
+        });
+    }
 }

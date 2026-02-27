@@ -1,6 +1,6 @@
 package com.loopers.interfaces.api.product.admin;
 
-import com.loopers.domain.product.ProductModel;
+import com.loopers.application.product.ProductDetail;
 
 import java.time.ZonedDateTime;
 
@@ -33,19 +33,19 @@ public class ProductAdminV1Dto {
         ZonedDateTime updatedAt,
         ZonedDateTime deletedAt
     ) {
-        public static ProductResponse from(ProductModel model, String brandName, int stockQuantity) {
+        public static ProductResponse from(ProductDetail detail) {
             return new ProductResponse(
-                model.getId(),
-                model.name(),
-                model.description(),
-                model.price().value(),
-                model.brandId(),
-                brandName,
-                model.likeCount(),
-                stockQuantity,
-                model.getCreatedAt(),
-                model.getUpdatedAt(),
-                model.getDeletedAt()
+                detail.id(),
+                detail.name(),
+                detail.description(),
+                detail.price(),
+                detail.brandId(),
+                detail.brandName(),
+                detail.likeCount(),
+                detail.stockQuantity(),
+                detail.createdAt(),
+                detail.updatedAt(),
+                detail.deletedAt()
             );
         }
     }

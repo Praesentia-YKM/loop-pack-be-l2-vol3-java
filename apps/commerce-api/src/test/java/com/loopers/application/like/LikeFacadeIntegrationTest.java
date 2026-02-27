@@ -1,5 +1,6 @@
 package com.loopers.application.like;
 
+import com.loopers.application.product.ProductFacade;
 import com.loopers.domain.brand.BrandService;
 import com.loopers.domain.like.LikeModel;
 import com.loopers.domain.product.Money;
@@ -23,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 class LikeFacadeIntegrationTest {
 
     @Autowired private LikeFacade likeFacade;
+    @Autowired private ProductFacade productFacade;
     @Autowired private ProductService productService;
     @Autowired private BrandService brandService;
     @Autowired private DatabaseCleanUp databaseCleanUp;
@@ -32,7 +34,7 @@ class LikeFacadeIntegrationTest {
 
     private Long createBrand(String name) { return brandService.register(name, "설명").getId(); }
     private Long createProduct(String name, int price, Long brandId) {
-        return productService.register(name, "설명", new Money(price), brandId, 10).getId();
+        return productFacade.register(name, "설명", new Money(price), brandId, 10).getId();
     }
 
     @DisplayName("좋아요 등록")

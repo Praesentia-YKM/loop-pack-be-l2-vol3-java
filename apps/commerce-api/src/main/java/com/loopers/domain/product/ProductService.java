@@ -1,8 +1,5 @@
 package com.loopers.domain.product;
 
-import com.loopers.domain.brand.BrandModel;
-import com.loopers.domain.brand.BrandRepository;
-import com.loopers.domain.stock.StockService;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
@@ -19,24 +16,11 @@ import java.util.List;
 public class ProductService {
 
     private final ProductRepository productRepository;
-    private final BrandRepository brandRepository;
-    private final StockService stockService;
 
     @Transactional
-    public ProductModel register(String name, String description, Money price, Long brandId, int initialStock) {
-        BrandModel brand = brandRepository.findById(brandId)
-            .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "브랜드를 찾을 수 없습니다."));
-
-        if (brand.getDeletedAt() != null) {
-            throw new CoreException(ErrorType.NOT_FOUND, "삭제된 브랜드에 상품을 등록할 수 없습니다.");
-        }
-
+    public ProductModel register(String name, String description, Money price, Long brandId) {
         ProductModel product = new ProductModel(name, description, price, brandId);
-        ProductModel saved = productRepository.save(product);
-
-        stockService.create(saved.getId(), initialStock);
-
-        return saved;
+        return productRepository.save(product);
     }
 
     @Transactional(readOnly = true)
@@ -87,12 +71,6 @@ public class ProductService {
     public void deleteAllByBrandId(Long brandId) {
         List<ProductModel> products = productRepository.findAllByBrandId(brandId);
         products.forEach(ProductModel::delete);
-    }
-
-    public String getBrandName(Long brandId) {
-        return brandRepository.findById(brandId)
-            .map(brand -> brand.name().value())
-            .orElse(null);
     }
 
     private ProductModel findById(Long productId) {

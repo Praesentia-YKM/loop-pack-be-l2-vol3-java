@@ -1,6 +1,6 @@
 package com.loopers.interfaces.api.product;
 
-import com.loopers.domain.product.ProductModel;
+import com.loopers.application.product.ProductDetail;
 import com.loopers.domain.stock.StockStatus;
 
 public class ProductV1Dto {
@@ -15,16 +15,16 @@ public class ProductV1Dto {
         int likeCount,
         StockStatus stockStatus
     ) {
-        public static ProductResponse from(ProductModel model, String brandName, StockStatus stockStatus) {
+        public static ProductResponse from(ProductDetail detail) {
             return new ProductResponse(
-                model.getId(),
-                model.name(),
-                model.description(),
-                model.price().value(),
-                model.brandId(),
-                brandName,
-                model.likeCount(),
-                stockStatus
+                detail.id(),
+                detail.name(),
+                detail.description(),
+                detail.price(),
+                detail.brandId(),
+                detail.brandName(),
+                detail.likeCount(),
+                detail.stockStatus()
             );
         }
     }

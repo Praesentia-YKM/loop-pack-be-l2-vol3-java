@@ -1,8 +1,11 @@
 package com.loopers.interfaces.api.brand.admin;
 
+import com.loopers.application.brand.BrandFacade;
 import com.loopers.domain.brand.BrandModel;
 import com.loopers.domain.brand.BrandService;
 import com.loopers.interfaces.api.ApiResponse;
+import com.loopers.interfaces.auth.AdminInfo;
+import com.loopers.interfaces.auth.AdminUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -22,9 +25,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class BrandAdminV1Controller {
 
     private final BrandService brandService;
+    private final BrandFacade brandFacade;
 
     @PostMapping
     public ApiResponse<BrandAdminV1Dto.BrandResponse> create(
+        @AdminUser AdminInfo admin,
         @RequestBody BrandAdminV1Dto.CreateRequest request
     ) {
         BrandModel brand = brandService.register(request.name(), request.description());
@@ -33,21 +38,26 @@ public class BrandAdminV1Controller {
 
     @GetMapping
     public ApiResponse<Page<BrandAdminV1Dto.BrandResponse>> getAll(
+        @AdminUser AdminInfo admin,
         @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "10") int size
+        @RequestParam(defaultValue = "20") int size
     ) {
         Page<BrandModel> result = brandService.getAll(PageRequest.of(page, size));
         return ApiResponse.success(result.map(BrandAdminV1Dto.BrandResponse::from));
     }
 
     @GetMapping("/{brandId}")
-    public ApiResponse<BrandAdminV1Dto.BrandResponse> getBrand(@PathVariable Long brandId) {
+    public ApiResponse<BrandAdminV1Dto.BrandResponse> getBrand(
+        @AdminUser AdminInfo admin,
+        @PathVariable Long brandId
+    ) {
         BrandModel brand = brandService.getBrandForAdmin(brandId);
         return ApiResponse.success(BrandAdminV1Dto.BrandResponse.from(brand));
     }
 
     @PutMapping("/{brandId}")
     public ApiResponse<BrandAdminV1Dto.BrandResponse> update(
+        @AdminUser AdminInfo admin,
         @PathVariable Long brandId,
         @RequestBody BrandAdminV1Dto.UpdateRequest request
     ) {
@@ -56,8 +66,8 @@ public class BrandAdminV1Controller {
     }
 
     @DeleteMapping("/{brandId}")
-    public ApiResponse<Object> delete(@PathVariable Long brandId) {
-        brandService.delete(brandId);
+    public ApiResponse<Object> delete(@AdminUser AdminInfo admin, @PathVariable Long brandId) {
+        brandFacade.delete(brandId);
         return ApiResponse.success();
     }
 }

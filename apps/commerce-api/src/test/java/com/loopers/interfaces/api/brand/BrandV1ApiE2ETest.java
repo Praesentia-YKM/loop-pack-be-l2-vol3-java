@@ -12,6 +12,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -40,10 +41,16 @@ class BrandV1ApiE2ETest {
         databaseCleanUp.truncateAllTables();
     }
 
+    private HttpHeaders adminHeaders() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-Loopers-Ldap", "loopers.admin");
+        return headers;
+    }
+
     private Long createBrand(String name, String description) {
         BrandAdminV1Dto.CreateRequest request = new BrandAdminV1Dto.CreateRequest(name, description);
         ResponseEntity<ApiResponse<BrandAdminV1Dto.BrandResponse>> response = testRestTemplate.exchange(
-            ADMIN_ENDPOINT, HttpMethod.POST, new HttpEntity<>(request),
+            ADMIN_ENDPOINT, HttpMethod.POST, new HttpEntity<>(request, adminHeaders()),
             new ParameterizedTypeReference<>() {}
         );
         return response.getBody().data().id();
@@ -51,7 +58,7 @@ class BrandV1ApiE2ETest {
 
     private void deleteBrand(Long brandId) {
         testRestTemplate.exchange(
-            ADMIN_ENDPOINT + "/" + brandId, HttpMethod.DELETE, null,
+            ADMIN_ENDPOINT + "/" + brandId, HttpMethod.DELETE, new HttpEntity<>(null, adminHeaders()),
             new ParameterizedTypeReference<ApiResponse<Object>>() {}
         );
     }
@@ -128,7 +135,7 @@ class BrandV1ApiE2ETest {
 
             // when
             ResponseEntity<ApiResponse<BrandAdminV1Dto.BrandResponse>> response = testRestTemplate.exchange(
-                ADMIN_ENDPOINT, HttpMethod.POST, new HttpEntity<>(request),
+                ADMIN_ENDPOINT, HttpMethod.POST, new HttpEntity<>(request, adminHeaders()),
                 new ParameterizedTypeReference<>() {}
             );
 
@@ -150,7 +157,7 @@ class BrandV1ApiE2ETest {
 
             // when
             ResponseEntity<ApiResponse<Object>> response = testRestTemplate.exchange(
-                ADMIN_ENDPOINT, HttpMethod.POST, new HttpEntity<>(request),
+                ADMIN_ENDPOINT, HttpMethod.POST, new HttpEntity<>(request, adminHeaders()),
                 new ParameterizedTypeReference<>() {}
             );
 
@@ -166,7 +173,7 @@ class BrandV1ApiE2ETest {
 
             // when
             ResponseEntity<ApiResponse<Object>> response = testRestTemplate.exchange(
-                ADMIN_ENDPOINT, HttpMethod.POST, new HttpEntity<>(request),
+                ADMIN_ENDPOINT, HttpMethod.POST, new HttpEntity<>(request, adminHeaders()),
                 new ParameterizedTypeReference<>() {}
             );
 
@@ -188,7 +195,7 @@ class BrandV1ApiE2ETest {
 
             // when
             ResponseEntity<ApiResponse<Object>> response = testRestTemplate.exchange(
-                ADMIN_ENDPOINT + "?page=0&size=10", HttpMethod.GET, null,
+                ADMIN_ENDPOINT + "?page=0&size=10", HttpMethod.GET, new HttpEntity<>(null, adminHeaders()),
                 new ParameterizedTypeReference<>() {}
             );
 
@@ -209,7 +216,7 @@ class BrandV1ApiE2ETest {
 
             // when
             ResponseEntity<ApiResponse<BrandAdminV1Dto.BrandResponse>> response = testRestTemplate.exchange(
-                ADMIN_ENDPOINT + "/" + brandId, HttpMethod.GET, null,
+                ADMIN_ENDPOINT + "/" + brandId, HttpMethod.GET, new HttpEntity<>(null, adminHeaders()),
                 new ParameterizedTypeReference<>() {}
             );
 
@@ -225,7 +232,7 @@ class BrandV1ApiE2ETest {
         void returns404WhenNotFound() {
             // given & when
             ResponseEntity<ApiResponse<Object>> response = testRestTemplate.exchange(
-                ADMIN_ENDPOINT + "/999", HttpMethod.GET, null,
+                ADMIN_ENDPOINT + "/999", HttpMethod.GET, new HttpEntity<>(null, adminHeaders()),
                 new ParameterizedTypeReference<>() {}
             );
 
@@ -247,7 +254,7 @@ class BrandV1ApiE2ETest {
 
             // when
             ResponseEntity<ApiResponse<BrandAdminV1Dto.BrandResponse>> response = testRestTemplate.exchange(
-                ADMIN_ENDPOINT + "/" + brandId, HttpMethod.PUT, new HttpEntity<>(request),
+                ADMIN_ENDPOINT + "/" + brandId, HttpMethod.PUT, new HttpEntity<>(request, adminHeaders()),
                 new ParameterizedTypeReference<>() {}
             );
 
@@ -269,7 +276,7 @@ class BrandV1ApiE2ETest {
 
             // when
             ResponseEntity<ApiResponse<Object>> response = testRestTemplate.exchange(
-                ADMIN_ENDPOINT + "/" + targetId, HttpMethod.PUT, new HttpEntity<>(request),
+                ADMIN_ENDPOINT + "/" + targetId, HttpMethod.PUT, new HttpEntity<>(request, adminHeaders()),
                 new ParameterizedTypeReference<>() {}
             );
 
@@ -290,7 +297,7 @@ class BrandV1ApiE2ETest {
 
             // when
             ResponseEntity<ApiResponse<Object>> response = testRestTemplate.exchange(
-                ADMIN_ENDPOINT + "/" + brandId, HttpMethod.DELETE, null,
+                ADMIN_ENDPOINT + "/" + brandId, HttpMethod.DELETE, new HttpEntity<>(null, adminHeaders()),
                 new ParameterizedTypeReference<>() {}
             );
 
@@ -303,7 +310,7 @@ class BrandV1ApiE2ETest {
         void returns404WhenNotFound() {
             // given & when
             ResponseEntity<ApiResponse<Object>> response = testRestTemplate.exchange(
-                ADMIN_ENDPOINT + "/999", HttpMethod.DELETE, null,
+                ADMIN_ENDPOINT + "/999", HttpMethod.DELETE, new HttpEntity<>(null, adminHeaders()),
                 new ParameterizedTypeReference<>() {}
             );
 

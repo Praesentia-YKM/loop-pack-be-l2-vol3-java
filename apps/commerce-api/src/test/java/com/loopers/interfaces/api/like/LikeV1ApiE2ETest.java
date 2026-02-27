@@ -35,22 +35,28 @@ class LikeV1ApiE2ETest {
     @AfterEach
     void tearDown() { databaseCleanUp.truncateAllTables(); }
 
+    private HttpHeaders adminHeaders() {
+        HttpHeaders h = new HttpHeaders();
+        h.set("X-Loopers-Ldap", "loopers.admin");
+        return h;
+    }
+
     private Long createBrand(String name) {
         var req = new BrandAdminV1Dto.CreateRequest(name, "설명");
-        return testRestTemplate.exchange("/api-admin/v1/brands", HttpMethod.POST, new HttpEntity<>(req),
+        return testRestTemplate.exchange("/api-admin/v1/brands", HttpMethod.POST, new HttpEntity<>(req, adminHeaders()),
             new ParameterizedTypeReference<ApiResponse<BrandAdminV1Dto.BrandResponse>>() {}).getBody().data().id();
     }
 
     private Long createProduct(String name, int price, Long brandId) {
         var req = new ProductAdminV1Dto.CreateRequest(name, "설명", price, brandId, 10);
-        return testRestTemplate.exchange("/api-admin/v1/products", HttpMethod.POST, new HttpEntity<>(req),
+        return testRestTemplate.exchange("/api-admin/v1/products", HttpMethod.POST, new HttpEntity<>(req, adminHeaders()),
             new ParameterizedTypeReference<ApiResponse<ProductAdminV1Dto.ProductResponse>>() {}).getBody().data().id();
     }
 
     private void signupMember() {
         var req = new MemberV1Dto.SignupRequest("testuser", "Test1234!", "테스트유저",
             LocalDate.of(1998, 1, 1), "test@example.com");
-        testRestTemplate.exchange("/api/v1/members", HttpMethod.POST, new HttpEntity<>(req),
+        testRestTemplate.exchange("/api/v1/users", HttpMethod.POST, new HttpEntity<>(req),
             new ParameterizedTypeReference<ApiResponse<MemberV1Dto.MemberResponse>>() {});
     }
 
@@ -175,6 +181,19 @@ class LikeV1ApiE2ETest {
                 new ParameterizedTypeReference<ApiResponse<Object>>() {});
 
             assertTrue(response.getStatusCode().is2xxSuccessful());
+        }
+
+        @DisplayName("다른 유저의 좋아요 목록을 조회하면 400을 반환한다")
+        @Test
+        void returns400WhenUserIdMismatch() {
+            signupMember();
+
+            var response = testRestTemplate.exchange(
+                "/api/v1/users/999/likes", HttpMethod.GET,
+                new HttpEntity<>(null, authHeaders()),
+                new ParameterizedTypeReference<ApiResponse<Object>>() {});
+
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         }
     }
 }

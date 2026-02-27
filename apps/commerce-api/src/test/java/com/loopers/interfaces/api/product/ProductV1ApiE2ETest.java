@@ -13,6 +13,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -42,10 +43,16 @@ class ProductV1ApiE2ETest {
         databaseCleanUp.truncateAllTables();
     }
 
+    private HttpHeaders adminHeaders() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-Loopers-Ldap", "loopers.admin");
+        return headers;
+    }
+
     private Long createBrand(String name) {
         BrandAdminV1Dto.CreateRequest request = new BrandAdminV1Dto.CreateRequest(name, "설명");
         ResponseEntity<ApiResponse<BrandAdminV1Dto.BrandResponse>> response = testRestTemplate.exchange(
-            BRAND_ADMIN_ENDPOINT, HttpMethod.POST, new HttpEntity<>(request),
+            BRAND_ADMIN_ENDPOINT, HttpMethod.POST, new HttpEntity<>(request, adminHeaders()),
             new ParameterizedTypeReference<>() {}
         );
         return response.getBody().data().id();
@@ -54,7 +61,7 @@ class ProductV1ApiE2ETest {
     private Long createProduct(String name, int price, Long brandId, int initialStock) {
         ProductAdminV1Dto.CreateRequest request = new ProductAdminV1Dto.CreateRequest(name, "설명", price, brandId, initialStock);
         ResponseEntity<ApiResponse<ProductAdminV1Dto.ProductResponse>> response = testRestTemplate.exchange(
-            ADMIN_ENDPOINT, HttpMethod.POST, new HttpEntity<>(request),
+            ADMIN_ENDPOINT, HttpMethod.POST, new HttpEntity<>(request, adminHeaders()),
             new ParameterizedTypeReference<>() {}
         );
         return response.getBody().data().id();
@@ -62,14 +69,14 @@ class ProductV1ApiE2ETest {
 
     private void deleteProduct(Long productId) {
         testRestTemplate.exchange(
-            ADMIN_ENDPOINT + "/" + productId, HttpMethod.DELETE, null,
+            ADMIN_ENDPOINT + "/" + productId, HttpMethod.DELETE, new HttpEntity<>(null, adminHeaders()),
             new ParameterizedTypeReference<ApiResponse<Object>>() {}
         );
     }
 
     private void deleteBrand(Long brandId) {
         testRestTemplate.exchange(
-            BRAND_ADMIN_ENDPOINT + "/" + brandId, HttpMethod.DELETE, null,
+            BRAND_ADMIN_ENDPOINT + "/" + brandId, HttpMethod.DELETE, new HttpEntity<>(null, adminHeaders()),
             new ParameterizedTypeReference<ApiResponse<Object>>() {}
         );
     }
@@ -194,7 +201,7 @@ class ProductV1ApiE2ETest {
 
             // when
             ResponseEntity<ApiResponse<ProductAdminV1Dto.ProductResponse>> response = testRestTemplate.exchange(
-                ADMIN_ENDPOINT, HttpMethod.POST, new HttpEntity<>(request),
+                ADMIN_ENDPOINT, HttpMethod.POST, new HttpEntity<>(request, adminHeaders()),
                 new ParameterizedTypeReference<>() {}
             );
 
@@ -221,7 +228,7 @@ class ProductV1ApiE2ETest {
 
             // when
             ResponseEntity<ApiResponse<Object>> response = testRestTemplate.exchange(
-                ADMIN_ENDPOINT, HttpMethod.POST, new HttpEntity<>(request),
+                ADMIN_ENDPOINT, HttpMethod.POST, new HttpEntity<>(request, adminHeaders()),
                 new ParameterizedTypeReference<>() {}
             );
 
@@ -245,7 +252,7 @@ class ProductV1ApiE2ETest {
 
             // when
             ResponseEntity<ApiResponse<Object>> response = testRestTemplate.exchange(
-                ADMIN_ENDPOINT + "?page=0&size=10", HttpMethod.GET, null,
+                ADMIN_ENDPOINT + "?page=0&size=10", HttpMethod.GET, new HttpEntity<>(null, adminHeaders()),
                 new ParameterizedTypeReference<>() {}
             );
 
@@ -267,7 +274,7 @@ class ProductV1ApiE2ETest {
 
             // when
             ResponseEntity<ApiResponse<ProductAdminV1Dto.ProductResponse>> response = testRestTemplate.exchange(
-                ADMIN_ENDPOINT + "/" + productId, HttpMethod.GET, null,
+                ADMIN_ENDPOINT + "/" + productId, HttpMethod.GET, new HttpEntity<>(null, adminHeaders()),
                 new ParameterizedTypeReference<>() {}
             );
 
@@ -296,7 +303,7 @@ class ProductV1ApiE2ETest {
 
             // when
             ResponseEntity<ApiResponse<ProductAdminV1Dto.ProductResponse>> response = testRestTemplate.exchange(
-                ADMIN_ENDPOINT + "/" + productId, HttpMethod.PUT, new HttpEntity<>(request),
+                ADMIN_ENDPOINT + "/" + productId, HttpMethod.PUT, new HttpEntity<>(request, adminHeaders()),
                 new ParameterizedTypeReference<>() {}
             );
 
@@ -323,7 +330,7 @@ class ProductV1ApiE2ETest {
 
             // when
             ResponseEntity<ApiResponse<Object>> response = testRestTemplate.exchange(
-                ADMIN_ENDPOINT + "/" + productId, HttpMethod.DELETE, null,
+                ADMIN_ENDPOINT + "/" + productId, HttpMethod.DELETE, new HttpEntity<>(null, adminHeaders()),
                 new ParameterizedTypeReference<>() {}
             );
 
@@ -336,7 +343,7 @@ class ProductV1ApiE2ETest {
         void returns404WhenNotFound() {
             // given & when
             ResponseEntity<ApiResponse<Object>> response = testRestTemplate.exchange(
-                ADMIN_ENDPOINT + "/999", HttpMethod.DELETE, null,
+                ADMIN_ENDPOINT + "/999", HttpMethod.DELETE, new HttpEntity<>(null, adminHeaders()),
                 new ParameterizedTypeReference<>() {}
             );
 

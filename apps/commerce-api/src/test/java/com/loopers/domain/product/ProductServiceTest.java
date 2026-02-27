@@ -1,9 +1,5 @@
 package com.loopers.domain.product;
 
-import com.loopers.domain.brand.BrandModel;
-import com.loopers.domain.brand.BrandName;
-import com.loopers.domain.brand.BrandRepository;
-import com.loopers.domain.stock.StockService;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,17 +30,11 @@ class ProductServiceTest {
     @Mock
     private ProductRepository productRepository;
 
-    @Mock
-    private BrandRepository brandRepository;
-
-    @Mock
-    private StockService stockService;
-
     private ProductService productService;
 
     @BeforeEach
     void setUp() {
-        productService = new ProductService(productRepository, brandRepository, stockService);
+        productService = new ProductService(productRepository);
     }
 
     @DisplayName("상품 등록")
@@ -59,15 +49,12 @@ class ProductServiceTest {
             String description = "러닝화";
             Money price = new Money(129000);
             Long brandId = 1L;
-            int initialStock = 100;
 
-            BrandModel brand = new BrandModel(new BrandName("나이키"), "스포츠 브랜드");
-            when(brandRepository.findById(brandId)).thenReturn(Optional.of(brand));
             when(productRepository.save(any(ProductModel.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
             // when
-            ProductModel result = productService.register(name, description, price, brandId, initialStock);
+            ProductModel result = productService.register(name, description, price, brandId);
 
             // then
             assertAll(
@@ -77,38 +64,6 @@ class ProductServiceTest {
                 () -> assertThat(result.brandId()).isEqualTo(brandId)
             );
             verify(productRepository).save(any(ProductModel.class));
-        }
-
-        @DisplayName("삭제된 브랜드에 등록하면 NOT_FOUND 예외를 던진다")
-        @Test
-        void throwsWhenBrandDeleted() {
-            // given
-            Long brandId = 1L;
-            BrandModel brand = new BrandModel(new BrandName("나이키"), "스포츠 브랜드");
-            brand.delete();
-            when(brandRepository.findById(brandId)).thenReturn(Optional.of(brand));
-
-            // when
-            CoreException result = assertThrows(CoreException.class,
-                () -> productService.register("에어맥스", "러닝화", new Money(129000), brandId, 100));
-
-            // then
-            assertThat(result.getErrorType()).isEqualTo(ErrorType.NOT_FOUND);
-        }
-
-        @DisplayName("존재하지 않는 브랜드에 등록하면 NOT_FOUND 예외를 던진다")
-        @Test
-        void throwsWhenBrandNotFound() {
-            // given
-            Long brandId = 999L;
-            when(brandRepository.findById(brandId)).thenReturn(Optional.empty());
-
-            // when
-            CoreException result = assertThrows(CoreException.class,
-                () -> productService.register("에어맥스", "러닝화", new Money(129000), brandId, 100));
-
-            // then
-            assertThat(result.getErrorType()).isEqualTo(ErrorType.NOT_FOUND);
         }
     }
 
