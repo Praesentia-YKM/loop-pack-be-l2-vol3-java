@@ -1,5 +1,6 @@
-package com.loopers.domain.example;
+package com.loopers.application.example;
 
+import com.loopers.domain.example.ExampleModel;
 import com.loopers.infrastructure.example.ExampleJpaRepository;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
@@ -43,14 +44,14 @@ class ExampleServiceIntegrationTest {
             );
 
             // act
-            ExampleModel result = exampleService.getExample(exampleModel.getId());
+            ExampleInfo result = exampleService.getExample(exampleModel.getId());
 
             // assert
             assertAll(
                 () -> assertThat(result).isNotNull(),
-                () -> assertThat(result.getId()).isEqualTo(exampleModel.getId()),
-                () -> assertThat(result.getName()).isEqualTo(exampleModel.getName()),
-                () -> assertThat(result.getDescription()).isEqualTo(exampleModel.getDescription())
+                () -> assertThat(result.id()).isEqualTo(exampleModel.getId()),
+                () -> assertThat(result.name()).isEqualTo(exampleModel.getName()),
+                () -> assertThat(result.description()).isEqualTo(exampleModel.getDescription())
             );
         }
 
