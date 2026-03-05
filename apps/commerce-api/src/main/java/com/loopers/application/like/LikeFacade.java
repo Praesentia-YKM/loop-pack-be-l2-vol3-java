@@ -2,7 +2,7 @@ package com.loopers.application.like;
 
 import com.loopers.domain.like.LikeModel;
 import com.loopers.domain.product.ProductModel;
-import com.loopers.domain.product.ProductService;
+import com.loopers.application.product.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

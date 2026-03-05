@@ -1,7 +1,9 @@
-package com.loopers.domain.product;
+package com.loopers.application.product;
 
-import com.loopers.application.product.ProductFacade;
 import com.loopers.application.brand.BrandService;
+import com.loopers.domain.product.Money;
+import com.loopers.domain.product.ProductModel;
+import com.loopers.domain.product.ProductSortType;
 import com.loopers.domain.stock.StockModel;
 import com.loopers.application.stock.StockService;
 import com.loopers.support.error.CoreException;

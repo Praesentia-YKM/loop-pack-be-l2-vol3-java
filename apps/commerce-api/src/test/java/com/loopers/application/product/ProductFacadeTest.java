@@ -5,7 +5,7 @@ import com.loopers.domain.brand.BrandName;
 import com.loopers.application.brand.BrandService;
 import com.loopers.domain.product.Money;
 import com.loopers.domain.product.ProductModel;
-import com.loopers.domain.product.ProductService;
+import com.loopers.application.product.ProductService;
 import com.loopers.domain.stock.StockModel;
 import com.loopers.application.stock.StockService;
 import com.loopers.domain.stock.StockStatus;

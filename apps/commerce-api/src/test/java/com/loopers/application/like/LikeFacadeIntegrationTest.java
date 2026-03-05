@@ -5,7 +5,7 @@ import com.loopers.application.brand.BrandService;
 import com.loopers.domain.like.LikeModel;
 import com.loopers.domain.product.Money;
 import com.loopers.domain.product.ProductModel;
-import com.loopers.domain.product.ProductService;
+import com.loopers.application.product.ProductService;
 import com.loopers.utils.DatabaseCleanUp;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;

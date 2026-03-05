@@ -4,7 +4,6 @@ import com.loopers.domain.brand.BrandModel;
 import com.loopers.application.brand.BrandService;
 import com.loopers.domain.product.Money;
 import com.loopers.domain.product.ProductModel;
-import com.loopers.domain.product.ProductService;
 import com.loopers.domain.product.ProductSortType;
 import com.loopers.domain.stock.StockModel;
 import com.loopers.application.stock.StockService;
@@ -64,6 +63,16 @@ public class ProductFacade {
             StockModel stock = stockService.getByProductId(product.getId());
             return ProductDetail.ofAdmin(product, brandName, stock.quantity());
         });
+    }
+
+    @Transactional
+    public ProductDetail update(Long productId, String name, String description, Money price) {
+        productService.update(productId, name, description, price);
+        return getProductForAdmin(productId);
+    }
+
+    public void delete(Long productId) {
+        productService.delete(productId);
     }
 
     private String getBrandName(Long brandId) {
