@@ -1,6 +1,5 @@
 package com.loopers.application.brand;
 
-import com.loopers.domain.brand.BrandService;
 import com.loopers.domain.product.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

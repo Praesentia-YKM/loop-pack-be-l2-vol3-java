@@ -1,7 +1,7 @@
 package com.loopers.application.product;
 
 import com.loopers.domain.brand.BrandModel;
-import com.loopers.domain.brand.BrandService;
+import com.loopers.application.brand.BrandService;
 import com.loopers.domain.product.Money;
 import com.loopers.domain.product.ProductModel;
 import com.loopers.domain.product.ProductService;

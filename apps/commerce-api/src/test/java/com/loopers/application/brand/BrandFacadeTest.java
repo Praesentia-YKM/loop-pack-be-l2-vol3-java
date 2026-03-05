@@ -1,6 +1,6 @@
 package com.loopers.application.brand;
 
-import com.loopers.domain.brand.BrandService;
+import com.loopers.application.brand.BrandService;
 import com.loopers.domain.product.ProductService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

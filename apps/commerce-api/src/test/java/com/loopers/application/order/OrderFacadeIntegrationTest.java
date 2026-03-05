@@ -1,6 +1,6 @@
 package com.loopers.application.order;
 
-import com.loopers.domain.brand.BrandService;
+import com.loopers.application.brand.BrandService;
 import com.loopers.domain.order.OrderItemModel;
 import com.loopers.domain.order.OrderModel;
 import com.loopers.domain.order.OrderService;
