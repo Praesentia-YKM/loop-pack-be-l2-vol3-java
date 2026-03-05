@@ -1,9 +1,9 @@
 package com.loopers.interfaces.api.order;
 
+import com.loopers.application.member.MemberFacade;
 import com.loopers.application.order.OrderFacade;
 import com.loopers.application.order.OrderInfo;
 import com.loopers.application.order.OrderResult;
-import com.loopers.domain.member.MemberAuthService;
 import com.loopers.domain.member.MemberModel;
 import com.loopers.interfaces.api.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +26,7 @@ import java.util.List;
 public class OrderV1Controller {
 
     private final OrderFacade orderFacade;
-    private final MemberAuthService memberAuthService;
+    private final MemberFacade memberFacade;
 
     @PostMapping("/api/v1/orders")
     public ApiResponse<OrderV1Dto.OrderResponse> createOrder(
@@ -34,7 +34,7 @@ public class OrderV1Controller {
         @RequestHeader("X-Loopers-LoginId") String loginId,
         @RequestHeader("X-Loopers-LoginPw") String password
     ) {
-        MemberModel member = memberAuthService.authenticate(loginId, password);
+        MemberModel member = memberFacade.authenticate(loginId, password);
         OrderResult result = orderFacade.placeOrder(member.getId(), request.toCommands());
         return ApiResponse.success(OrderV1Dto.OrderResponse.fromResult(result));
     }
@@ -46,7 +46,7 @@ public class OrderV1Controller {
         @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startAt,
         @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endAt
     ) {
-        MemberModel member = memberAuthService.authenticate(loginId, password);
+        MemberModel member = memberFacade.authenticate(loginId, password);
         ZonedDateTime start = startAt.atStartOfDay(ZoneId.of("Asia/Seoul"));
         ZonedDateTime end = endAt.plusDays(1).atStartOfDay(ZoneId.of("Asia/Seoul"));
         List<OrderInfo> orders = orderFacade.getOrdersByUser(member.getId(), start, end);
@@ -62,7 +62,7 @@ public class OrderV1Controller {
         @RequestHeader("X-Loopers-LoginId") String loginId,
         @RequestHeader("X-Loopers-LoginPw") String password
     ) {
-        MemberModel member = memberAuthService.authenticate(loginId, password);
+        MemberModel member = memberFacade.authenticate(loginId, password);
         OrderInfo info = orderFacade.getOrder(orderId, member.getId());
         return ApiResponse.success(OrderV1Dto.OrderResponse.from(info));
     }
