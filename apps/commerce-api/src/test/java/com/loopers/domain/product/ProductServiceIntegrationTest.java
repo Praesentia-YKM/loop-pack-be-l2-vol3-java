@@ -3,7 +3,7 @@ package com.loopers.domain.product;
 import com.loopers.application.product.ProductFacade;
 import com.loopers.domain.brand.BrandService;
 import com.loopers.domain.stock.StockModel;
-import com.loopers.domain.stock.StockService;
+import com.loopers.application.stock.StockService;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import com.loopers.utils.DatabaseCleanUp;

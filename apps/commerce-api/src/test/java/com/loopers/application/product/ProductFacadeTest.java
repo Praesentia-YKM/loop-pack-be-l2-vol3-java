@@ -7,7 +7,7 @@ import com.loopers.domain.product.Money;
 import com.loopers.domain.product.ProductModel;
 import com.loopers.domain.product.ProductService;
 import com.loopers.domain.stock.StockModel;
-import com.loopers.domain.stock.StockService;
+import com.loopers.application.stock.StockService;
 import com.loopers.domain.stock.StockStatus;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
