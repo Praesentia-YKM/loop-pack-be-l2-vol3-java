@@ -2,16 +2,18 @@ package com.loopers.application.order;
 
 import com.loopers.domain.order.OrderItemModel;
 import com.loopers.domain.order.OrderModel;
-import com.loopers.domain.order.OrderService;
 import com.loopers.domain.product.Money;
 import com.loopers.domain.product.ProductModel;
 import com.loopers.application.product.ProductService;
-import com.loopers.domain.stock.StockModel;
 import com.loopers.application.stock.StockService;
+import com.loopers.domain.stock.StockModel;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -53,6 +55,32 @@ public class OrderFacade {
         List<OrderItemModel> savedItems = orderService.saveAllItems(items);
 
         return OrderResult.of(order, savedItems);
+    }
+
+    @Transactional(readOnly = true)
+    public OrderInfo getOrder(Long orderId, Long userId) {
+        OrderModel order = orderService.getOrder(orderId, userId);
+        List<OrderItemModel> items = orderService.getOrderItems(orderId);
+        return OrderInfo.from(order, items);
+    }
+
+    @Transactional(readOnly = true)
+    public List<OrderInfo> getOrdersByUser(Long userId, ZonedDateTime startAt, ZonedDateTime endAt) {
+        List<OrderModel> orders = orderService.getOrdersByUser(userId, startAt, endAt);
+        return orders.stream().map(OrderInfo::summaryFrom).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public OrderInfo getOrderForAdmin(Long orderId) {
+        OrderModel order = orderService.getOrderForAdmin(orderId);
+        List<OrderItemModel> items = orderService.getOrderItems(orderId);
+        return OrderInfo.from(order, items);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<OrderInfo> getAllForAdmin(Pageable pageable) {
+        Page<OrderModel> orders = orderService.getAllForAdmin(pageable);
+        return orders.map(OrderInfo::summaryFrom);
     }
 
     private record SnapshotHolder(

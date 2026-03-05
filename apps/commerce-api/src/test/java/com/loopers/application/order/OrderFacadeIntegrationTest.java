@@ -3,7 +3,7 @@ package com.loopers.application.order;
 import com.loopers.application.brand.BrandService;
 import com.loopers.domain.order.OrderItemModel;
 import com.loopers.domain.order.OrderModel;
-import com.loopers.domain.order.OrderService;
+import com.loopers.application.order.OrderService;
 import com.loopers.domain.order.OrderStatus;
 import com.loopers.application.product.ProductFacade;
 import com.loopers.domain.product.Money;

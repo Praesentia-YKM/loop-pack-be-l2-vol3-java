@@ -1,12 +1,10 @@
 package com.loopers.interfaces.api.order;
 
 import com.loopers.application.order.OrderFacade;
+import com.loopers.application.order.OrderInfo;
 import com.loopers.application.order.OrderResult;
 import com.loopers.domain.member.MemberAuthService;
 import com.loopers.domain.member.MemberModel;
-import com.loopers.domain.order.OrderItemModel;
-import com.loopers.domain.order.OrderModel;
-import com.loopers.domain.order.OrderService;
 import com.loopers.interfaces.api.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -28,7 +26,6 @@ import java.util.List;
 public class OrderV1Controller {
 
     private final OrderFacade orderFacade;
-    private final OrderService orderService;
     private final MemberAuthService memberAuthService;
 
     @PostMapping("/api/v1/orders")
@@ -39,7 +36,7 @@ public class OrderV1Controller {
     ) {
         MemberModel member = memberAuthService.authenticate(loginId, password);
         OrderResult result = orderFacade.placeOrder(member.getId(), request.toCommands());
-        return ApiResponse.success(OrderV1Dto.OrderResponse.from(result));
+        return ApiResponse.success(OrderV1Dto.OrderResponse.fromResult(result));
     }
 
     @GetMapping("/api/v1/orders")
@@ -52,8 +49,7 @@ public class OrderV1Controller {
         MemberModel member = memberAuthService.authenticate(loginId, password);
         ZonedDateTime start = startAt.atStartOfDay(ZoneId.of("Asia/Seoul"));
         ZonedDateTime end = endAt.plusDays(1).atStartOfDay(ZoneId.of("Asia/Seoul"));
-
-        List<OrderModel> orders = orderService.getOrdersByUser(member.getId(), start, end);
+        List<OrderInfo> orders = orderFacade.getOrdersByUser(member.getId(), start, end);
         List<OrderV1Dto.OrderSummaryResponse> response = orders.stream()
             .map(OrderV1Dto.OrderSummaryResponse::from)
             .toList();
@@ -67,8 +63,7 @@ public class OrderV1Controller {
         @RequestHeader("X-Loopers-LoginPw") String password
     ) {
         MemberModel member = memberAuthService.authenticate(loginId, password);
-        OrderModel order = orderService.getOrder(orderId, member.getId());
-        List<OrderItemModel> items = orderService.getOrderItems(orderId);
-        return ApiResponse.success(OrderV1Dto.OrderResponse.from(order, items));
+        OrderInfo info = orderFacade.getOrder(orderId, member.getId());
+        return ApiResponse.success(OrderV1Dto.OrderResponse.from(info));
     }
 }

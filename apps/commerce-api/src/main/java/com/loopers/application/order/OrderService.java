@@ -1,5 +1,9 @@
-package com.loopers.domain.order;
+package com.loopers.application.order;
 
+import com.loopers.domain.order.OrderItemModel;
+import com.loopers.domain.order.OrderItemRepository;
+import com.loopers.domain.order.OrderModel;
+import com.loopers.domain.order.OrderRepository;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
@@ -31,9 +35,7 @@ public class OrderService {
     @Transactional(readOnly = true)
     public OrderModel getOrder(Long orderId, Long userId) {
         OrderModel order = findById(orderId);
-        if (!order.userId().equals(userId)) {
-            throw new CoreException(ErrorType.BAD_REQUEST, "본인의 주문만 조회할 수 있습니다.");
-        }
+        order.validateOwner(userId);
         return order;
     }
 

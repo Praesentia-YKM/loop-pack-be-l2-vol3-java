@@ -52,4 +52,10 @@ public class OrderModel extends BaseEntity {
     public Money totalAmount() {
         return totalAmount;
     }
+
+    public void validateOwner(Long userId) {
+        if (!this.userId.equals(userId)) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "본인의 주문만 조회할 수 있습니다.");
+        }
+    }
 }
