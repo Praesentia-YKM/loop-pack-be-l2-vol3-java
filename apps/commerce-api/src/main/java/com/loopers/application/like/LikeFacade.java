@@ -1,7 +1,6 @@
 package com.loopers.application.like;
 
 import com.loopers.domain.like.LikeModel;
-import com.loopers.domain.like.LikeService;
 import com.loopers.domain.product.ProductModel;
 import com.loopers.domain.product.ProductService;
 import lombok.RequiredArgsConstructor;

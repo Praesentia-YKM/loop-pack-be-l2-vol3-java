@@ -1,5 +1,7 @@
-package com.loopers.domain.stock;
+package com.loopers.application.stock;
 
+import com.loopers.domain.stock.StockModel;
+import com.loopers.domain.stock.StockRepository;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
