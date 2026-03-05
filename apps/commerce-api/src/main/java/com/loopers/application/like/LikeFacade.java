@@ -1,6 +1,7 @@
 package com.loopers.application.like;
 
 import com.loopers.domain.like.LikeModel;
+import com.loopers.domain.like.LikeToggleService;
 import com.loopers.domain.product.ProductModel;
 import com.loopers.application.product.ProductService;
 import lombok.RequiredArgsConstructor;
@@ -17,33 +18,24 @@ public class LikeFacade {
 
     private final LikeService likeService;
     private final ProductService productService;
+    private final LikeToggleService likeToggleService;
 
     @Transactional
     public void like(Long userId, Long productId) {
         ProductModel product = productService.getProduct(productId);
-
         Optional<LikeModel> existing = likeService.findByUserIdAndProductId(userId, productId);
 
-        if (existing.isEmpty()) {
-            likeService.save(new LikeModel(userId, productId));
-            product.incrementLikeCount();
-        } else if (existing.get().getDeletedAt() != null) {
-            existing.get().restore();
-            product.incrementLikeCount();
-        }
-        // else: 이미 활성 좋아요 존재 → 멱등, 아무것도 안 함
+        Optional<LikeModel> newLike = likeToggleService.like(existing, product, userId, productId);
+        newLike.ifPresent(likeService::save);
     }
 
     @Transactional
     public void unlike(Long userId, Long productId) {
-        Optional<LikeModel> existing = likeService.findActiveLike(userId, productId);
+        Optional<LikeModel> activeLike = likeService.findActiveLike(userId, productId);
+        if (activeLike.isEmpty()) return;
 
-        if (existing.isPresent()) {
-            existing.get().delete();
-            ProductModel product = productService.getProduct(existing.get().productId());
-            product.decrementLikeCount();
-        }
-        // else: 좋아요가 없음 → 멱등, 아무것도 안 함
+        ProductModel product = productService.getProduct(activeLike.get().productId());
+        likeToggleService.unlike(activeLike.get(), product);
     }
 
     @Transactional(readOnly = true)

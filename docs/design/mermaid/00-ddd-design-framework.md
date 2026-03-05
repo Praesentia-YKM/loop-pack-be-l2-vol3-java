@@ -314,7 +314,7 @@ public ProductModel register(..., Long brandId, int initialStock) {
 
 | 질문 | 도메인 서비스 | 애플리케이션 서비스 |
 |------|-------------|-------------------|
-| 자체 비즈니스 규칙이 있는가? | **있다** (유니크 검증, 상태 전이) | **없다** (위임만 수행) |
+| 비즈니스 의사결정을 직접 내리는가? | **내린다** (여러 엔티티 상태 종합 판단) | **안 내린다** (엔티티/VO에 위임) |
 | 다른 Service를 조합하는가? | 같은 도메인 내 객체만 | **여러 도메인 Service를 조합** |
 | `@Transactional` 경계인가? | 아닐 수 있음 | **맞다** (유스케이스 단위) |
 | 제거하면 비즈니스 규칙이 깨지는가? | **깨진다** | 절차가 사라질 뿐, 규칙은 유지됨 |
@@ -327,14 +327,15 @@ public ProductModel register(..., Long brandId, int initialStock) {
 | `BrandService` | application | 브랜드명 유니크 검증, CRUD |
 | `ProductService` | application | 상품 CRUD |
 | `StockService` | application | 재고 생성, 차감 |
-| `LikeService` | application | 좋아요 등록/취소, 존재 여부 조회 |
+| `LikeToggleService` | **domain** | 좋아요 멱등성 판단 (Like + Product 종합 의사결정) |
+| `LikeService` | application | 좋아요 저장/조회 |
 | `OrderService` | application | 주문/주문상품 CRUD, 소유권 검증(엔티티 위임) |
 | `MemberSignupService` | application | 회원가입 (중복 ID 체크 + 생성) |
 | `MemberAuthService` | application | 인증 (비밀번호 검증은 엔티티 위임) |
 | `MemberPasswordService` | application | 비밀번호 변경 (검증은 엔티티/VO 위임) |
 | `BrandFacade` | application | 삭제 시 소속 상품 연쇄 soft delete |
 | `ProductFacade` | application | 상품 + Stock 동시 생성, 브랜드 존재 확인 |
-| `LikeFacade` | application | 삭제된 상품 체크, likeCount 동기화 |
+| `LikeFacade` | application | 데이터 조회 → LikeToggleService에 판단 위임 → 결과 저장 |
 | `OrderFacade` | application | 재고 차감 + 스냅샷 + 주문 생성, 주문 조회 |
 | `MemberFacade` | application | 회원 유스케이스 조율 (가입, 인증, 비밀번호 변경) |
 

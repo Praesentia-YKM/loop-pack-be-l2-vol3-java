@@ -457,9 +457,45 @@ public void deleteBrand(Long brandId) {
 }
 ```
 
-이전에 "규칙이면 도메인 서비스"라고 단순하게 분류했던 것이 틀렸다. **핵심 기준은 "규칙인가 절차인가"가 아니라 "비즈니스 의사결정을 내리는가"다.** 그리고 이 프로젝트에서는 모든 의사결정이 엔티티/VO 안에 잘 캡슐화되어 있었기에, 도메인 서비스가 필요한 경우가 없었다.
+이전에 "규칙이면 도메인 서비스"라고 단순하게 분류했던 것이 틀렸다. **핵심 기준은 "규칙인가 절차인가"가 아니라 "비즈니스 의사결정을 내리는가"다.** 대부분의 의사결정은 엔티티/VO 안에 캡슐화되어 있지만, 하나 발견했다.
 
-**도메인 서비스가 필요한 경우는?** 두 개 이상의 어그리게이트에 걸친 비즈니스 의사결정을 내려야 하는데, 어느 한쪽 엔티티에 넣기 어려운 경우다. 예를 들어 "이체 가능 여부를 출금 계좌와 입금 계좌의 상태를 종합해 판단하는" 같은 로직이 그렇다. 현재 프로젝트에는 이런 케이스가 없었다.
+**LikeFacade에 숨어있던 도메인 서비스:**
+
+좋아요 멱등성 로직은 `LikeModel`과 `ProductModel` 두 엔티티의 상태를 종합해서 판단한다. "좋아요가 없으면 생성, 삭제됐으면 복구, 이미 있으면 무시" — 이 판단을 어느 한쪽 엔티티에 넣을 수 없다. `LikeModel`은 `ProductModel`을 모르고, `ProductModel`은 `LikeModel`을 모른다.
+
+이 로직을 지우면 **"멱등성 있는 좋아요"라는 비즈니스 규칙 자체가 사라진다.** 조율이 아니라 의사결정이다. 그래서 도메인 서비스로 분리했다.
+
+```java
+// domain/like/LikeToggleService — 도메인 서비스
+// Like + Product 두 엔티티의 상태를 종합하여 판단. 인프라 의존 없음.
+public Optional<LikeModel> like(Optional<LikeModel> existing, ProductModel product,
+                                 Long userId, Long productId) {
+    if (existing.isEmpty()) {                          // 판단: 신규 → 생성 + 카운트 증가
+        product.incrementLikeCount();
+        return Optional.of(new LikeModel(userId, productId));
+    }
+    if (existing.get().getDeletedAt() != null) {       // 판단: 삭제됨 → 복구 + 카운트 증가
+        existing.get().restore();
+        product.incrementLikeCount();
+    }
+    // else: 이미 활성 → 멱등 무시
+    return Optional.empty();
+}
+```
+
+```java
+// application/like/LikeFacade — 애플리케이션 서비스 (조율만)
+// 데이터 조회 → 도메인 서비스에 판단 위임 → 결과 저장
+public void like(Long userId, Long productId) {
+    ProductModel product = productService.getProduct(productId);
+    Optional<LikeModel> existing = likeService.findByUserIdAndProductId(userId, productId);
+
+    Optional<LikeModel> newLike = likeToggleService.like(existing, product, userId, productId);
+    newLike.ifPresent(likeService::save);
+}
+```
+
+**도메인 서비스가 필요한 조건:** 두 개 이상의 어그리게이트에 걸친 비즈니스 의사결정을 내려야 하는데, 어느 한쪽 엔티티에 넣기 어려운 경우다. `LikeToggleService`가 정확히 이 케이스다.
 
 **범위 한정:** 이 "의사결정" 기준은 **도메인 계층과 애플리케이션 계층 사이에서만** 유효하다. Controller(HTTP 변환)나 Repository(데이터 접근)에는 적용하지 않는다.
 
@@ -544,8 +580,9 @@ Repository Interface가 `domain/` 패키지에 있는 이유가 여기에 있다
 | `StockModel` (Entity) | 재고 충분 여부 판단, 차감/증가 (`decrease`, `increase`) |
 | `OrderModel` (Entity) | 주문 소유권 검증 (`validateOwner`), 상태 전이 |
 | `ProductModel` (Entity) | likeCount 증감, 삭제 상태 검증 |
+| `LikeToggleService` (도메인 서비스) | Like + Product 두 엔티티의 상태를 종합하여 좋아요 반응 결정 (신규/복구/멱등 무시) |
 
-현재 프로젝트에는 **도메인 서비스가 없다.** 모든 비즈니스 의사결정이 엔티티와 VO 안에 캡슐화되어 있기 때문이다.
+대부분의 비즈니스 의사결정은 엔티티와 VO 안에 캡슐화되어 있다. 하지만 **좋아요 멱등성 판단**은 `LikeModel`과 `ProductModel` 두 엔티티의 상태를 종합해야 하므로 어느 한쪽 엔티티에 넣을 수 없다. 이것이 `LikeToggleService` 도메인 서비스가 필요한 이유다.
 
 ### 애플리케이션 — 조율 (Service + Facade)
 
@@ -556,7 +593,7 @@ Repository Interface가 `domain/` 패키지에 있는 이유가 여기에 있다
 | `BrandService` | 브랜드명 유니크 체크 + CRUD (이름 유효성은 `BrandName` VO가 판단) |
 | `ProductService` | 상품 CRUD, likeCount 증감, soft delete |
 | `StockService` | 재고 생성, 차감 (부족 여부는 `StockModel`이 판단) |
-| `LikeService` | 좋아요 등록/취소, 멱등성, 존재 여부 조회 |
+| `LikeService` | 좋아요 저장/조회 (멱등성 판단은 `LikeToggleService` 도메인 서비스가 담당) |
 | `OrderService` | 주문/주문상품 CRUD (소유권 검증은 `OrderModel`이 판단) |
 | `MemberSignupService` | 회원가입 (ID 중복 체크 + 생성, 형식 검증은 `LoginId` VO가 판단) |
 | `MemberAuthService` | 인증 (비밀번호 검증은 엔티티에 위임) |
@@ -568,7 +605,7 @@ Repository Interface가 `domain/` 패키지에 있는 이유가 여기에 있다
 |---------|---------|------|
 | `BrandFacade` | 브랜드 삭제 → 소속 상품 연쇄 soft delete | 규칙 (여러 도메인에 걸침) |
 | `ProductFacade` | 브랜드 존재 확인 → 상품 생성 → 재고 생성 | 절차 |
-| `LikeFacade` | 삭제된 상품 체크 → 좋아요 처리 → likeCount 동기화 | 절차 |
+| `LikeFacade` | 데이터 조회 → `LikeToggleService`에 판단 위임 → 결과 저장 | 절차 |
 | `OrderFacade` | 상품 조회 → 삭제 검증 → 재고 차감 → 주문 생성 (All or Nothing) | 규칙 (여러 도메인에 걸침) |
 | `MemberFacade` | 회원 유스케이스 조율 (가입, 인증, 비밀번호 변경) | 절차 |
 
@@ -590,6 +627,8 @@ Service와 Facade 모두 `application/` 레이어에 있다. 차이는 **의존 
 
 둘째, **"규칙을 담는다"와 "의사결정을 내린다"는 다르다.** 처음에 `BrandService`가 "중복 이름 검증"이라는 규칙을 담고 있으니 도메인 서비스라고 생각했다. 하지만 리팩토링 후 깨달았다. Service가 하는 건 DB 상태를 확인하고 결과를 적용하는 **조율**이다. 실제 의사결정("이 이름이 유효한가?")은 `BrandName` VO가 내린다. "규칙이 있으면 도메인 서비스"가 아니라 **"비즈니스 의사결정을 직접 내리면 도메인 서비스"**다. 이 차이를 모르면 Service를 전부 `domain/`에 두는 실수를 하게 된다 — 실제로 내가 그랬다.
 
-셋째, **원칙은 깰 수 있다. 단, 조건이 있다.** 깨면 실제로 코드에서 터지는 원칙은 지켜야 한다. 깨도 다른 수단으로 보호 가능하고, 그 보호를 현재 조직이 유지할 수 있다면, 깨는 것이 정답일 수 있다. DDD 리포지토리 원칙을 깬 것도 이 판단의 결과였다.
+셋째, **"도메인 서비스가 없다"는 의심해봐야 한다.** 처음에 모든 Service를 application으로 옮기고 "도메인 서비스가 하나도 없다"고 결론 내렸다. 근데 곰곰이 보니 `LikeFacade.like()`의 if/else 분기가 비즈니스 의사결정이었다. 지우면 규칙이 사라지는 코드가 application 레이어에 있었던 것이다. "지우면 뭐가 사라지는가?"를 물었더니 숨어있던 도메인 서비스가 드러났다.
+
+넷째, **원칙은 깰 수 있다. 단, 조건이 있다.** 깨면 실제로 코드에서 터지는 원칙은 지켜야 한다. 깨도 다른 수단으로 보호 가능하고, 그 보호를 현재 조직이 유지할 수 있다면, 깨는 것이 정답일 수 있다. DDD 리포지토리 원칙을 깬 것도 이 판단의 결과였다.
 
 오늘도 느낀 바지만 역시 "은탄환은 없다" 하지만 시작은 "어디에 뭘 둬야 하지?"라는 고민의 출발점으로는 충분했다. 적어도 감으로 결정하는 것보다, **키워드를 들이대고 검증할 수 있다**는 점에서 설계의 질이 달라질 수 있다고 생각한다.
