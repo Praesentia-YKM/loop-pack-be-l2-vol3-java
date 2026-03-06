@@ -6,6 +6,8 @@ import com.loopers.domain.coupon.CouponModel;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,8 +46,8 @@ public class CouponIssueService {
     }
 
     @Transactional(readOnly = true)
-    public List<CouponIssueModel> getIssuesByCoupon(Long couponId) {
-        return couponIssueRepository.findAllByCouponId(couponId);
+    public Page<CouponIssueModel> getIssuesByCoupon(Long couponId, Pageable pageable) {
+        return couponIssueRepository.findAllByCouponId(couponId, pageable);
     }
 
     @Transactional

@@ -5,6 +5,9 @@ import com.loopers.domain.coupon.CouponIssueRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -30,8 +33,8 @@ public class CouponIssueRepositoryImpl implements CouponIssueRepository {
     }
 
     @Override
-    public List<CouponIssueModel> findAllByCouponId(Long couponId) {
-        return couponIssueJpaRepository.findAllByCouponId(couponId);
+    public Page<CouponIssueModel> findAllByCouponId(Long couponId, Pageable pageable) {
+        return couponIssueJpaRepository.findAllByCouponId(couponId, pageable);
     }
 
     @Override

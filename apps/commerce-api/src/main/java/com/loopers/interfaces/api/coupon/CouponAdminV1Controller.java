@@ -2,13 +2,12 @@ package com.loopers.interfaces.api.coupon;
 
 import com.loopers.application.coupon.CouponIssueService;
 import com.loopers.application.coupon.CouponService;
-import com.loopers.domain.coupon.CouponIssueModel;
 import com.loopers.domain.coupon.CouponModel;
 import com.loopers.interfaces.api.ApiResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RequiredArgsConstructor
 @RestController
@@ -18,12 +17,9 @@ public class CouponAdminV1Controller {
     private final CouponIssueService couponIssueService;
 
     @GetMapping("/api-admin/v1/coupons")
-    public ApiResponse<List<CouponAdminV1Dto.CouponResponse>> getCoupons() {
-        List<CouponModel> coupons = couponService.getAllCoupons();
-        List<CouponAdminV1Dto.CouponResponse> response = coupons.stream()
-            .map(CouponAdminV1Dto.CouponResponse::from)
-            .toList();
-        return ApiResponse.success(response);
+    public ApiResponse<Page<CouponAdminV1Dto.CouponResponse>> getCoupons(Pageable pageable) {
+        Page<CouponModel> coupons = couponService.getAllCoupons(pageable);
+        return ApiResponse.success(coupons.map(CouponAdminV1Dto.CouponResponse::from));
     }
 
     @GetMapping("/api-admin/v1/coupons/{couponId}")
@@ -62,13 +58,12 @@ public class CouponAdminV1Controller {
     }
 
     @GetMapping("/api-admin/v1/coupons/{couponId}/issues")
-    public ApiResponse<List<CouponV1Dto.CouponIssueResponse>> getCouponIssues(
-        @PathVariable Long couponId
+    public ApiResponse<Page<CouponV1Dto.CouponIssueResponse>> getCouponIssues(
+        @PathVariable Long couponId, Pageable pageable
     ) {
-        List<CouponIssueModel> issues = couponIssueService.getIssuesByCoupon(couponId);
-        List<CouponV1Dto.CouponIssueResponse> response = issues.stream()
-            .map(CouponV1Dto.CouponIssueResponse::from)
-            .toList();
-        return ApiResponse.success(response);
+        return ApiResponse.success(
+            couponIssueService.getIssuesByCoupon(couponId, pageable)
+                .map(CouponV1Dto.CouponIssueResponse::from)
+        );
     }
 }
