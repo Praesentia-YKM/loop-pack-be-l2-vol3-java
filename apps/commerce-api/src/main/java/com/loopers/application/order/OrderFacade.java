@@ -51,34 +51,29 @@ public class OrderFacade {
             ));
         }
 
-        // 2. 쿠폰 검증 + 할인 계산 (락 불필요 — 읽기 전용)
-        Money discountAmount = Money.ZERO;
-        if (couponIssueId != null) {
-            CouponIssueModel couponIssue = couponIssueService.getCouponIssue(couponIssueId);
-            couponIssue.validateOwner(userId);
-            CouponModel coupon = couponService.getCoupon(couponIssue.couponId());
-            coupon.validateUsable(totalAmount);
-            discountAmount = coupon.calculateDiscount(totalAmount);
-        }
-
-        // 3. 비관적 락: 재고 차감 (productId 오름차순 — 데드락 방지)
+        // 2. 비관적 락: 재고 차감 (productId 오름차순 — 데드락 방지)
         for (OrderItemCommand cmd : sorted) {
             StockModel stock = stockService.getByProductIdForUpdate(cmd.productId());
             stock.decrease(cmd.quantity());
         }
 
-        // 4. 비관적 락: 쿠폰 사용 처리
+        // 3. 비관적 락: 쿠폰 검증 + 할인 + 사용 처리 (한 번만 FOR UPDATE로 조회)
+        Money discountAmount = Money.ZERO;
+        CouponIssueModel couponIssue = null;
         if (couponIssueId != null) {
-            CouponIssueModel lockedCouponIssue = couponIssueService.getCouponIssueForUpdate(couponIssueId);
-            lockedCouponIssue.use(null);
+            couponIssue = couponIssueService.getCouponIssueForUpdate(couponIssueId);
+            couponIssue.validateOwner(userId);
+            CouponModel coupon = couponService.getCoupon(couponIssue.couponId());
+            coupon.validateUsable(totalAmount);
+            discountAmount = coupon.calculateDiscount(totalAmount);
+            couponIssue.use(null);
         }
 
-        // 5. 주문 생성
+        // 4. 주문 생성
         OrderModel order = orderService.save(new OrderModel(userId, totalAmount, discountAmount, couponIssueId));
 
-        // 6. 쿠폰에 orderId 연결
-        if (couponIssueId != null) {
-            CouponIssueModel couponIssue = couponIssueService.getCouponIssue(couponIssueId);
+        // 5. 쿠폰에 orderId 연결
+        if (couponIssue != null) {
             couponIssue.setOrderId(order.getId());
         }
 

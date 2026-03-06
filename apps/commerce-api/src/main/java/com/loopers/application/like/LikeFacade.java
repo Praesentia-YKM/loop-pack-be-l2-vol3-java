@@ -20,7 +20,7 @@ public class LikeFacade {
     private final ProductService productService;
     private final LikeTransactionService likeTransactionService;
 
-    private static final int MAX_RETRY = 3;
+    private static final int MAX_RETRY = 10;
 
     public void like(Long userId, Long productId) {
         retryOnOptimisticLock(() -> likeTransactionService.doLike(userId, productId));
