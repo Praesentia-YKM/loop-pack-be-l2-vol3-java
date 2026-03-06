@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -33,25 +34,24 @@ public class OrderFacade {
 
     @Transactional
     public OrderResult placeOrder(Long userId, List<OrderItemCommand> commands, Long couponIssueId) {
-        // 1. 상품 조회 + 금액 계산
+        // 1. 락 없이: 상품 조회 + 금액 계산 (productId 오름차순 정렬 — 데드락 방지)
+        List<OrderItemCommand> sorted = commands.stream()
+            .sorted(Comparator.comparing(OrderItemCommand::productId))
+            .toList();
+
         Money totalAmount = Money.ZERO;
         List<SnapshotHolder> snapshots = new ArrayList<>();
 
-        for (OrderItemCommand cmd : commands) {
+        for (OrderItemCommand cmd : sorted) {
             ProductModel product = productService.getProduct(cmd.productId());
-
-            StockModel stock = stockService.getByProductId(cmd.productId());
-            stock.decrease(cmd.quantity());
-
             Money subtotal = product.price().multiply(cmd.quantity());
             totalAmount = totalAmount.add(subtotal);
-
             snapshots.add(new SnapshotHolder(
                 product.getId(), product.name(), product.price(), cmd.quantity()
             ));
         }
 
-        // 2. 쿠폰 검증 + 할인 계산
+        // 2. 쿠폰 검증 + 할인 계산 (락 불필요 — 읽기 전용)
         Money discountAmount = Money.ZERO;
         if (couponIssueId != null) {
             CouponIssueModel couponIssue = couponIssueService.getCouponIssue(couponIssueId);
@@ -59,13 +59,24 @@ public class OrderFacade {
             CouponModel coupon = couponService.getCoupon(couponIssue.couponId());
             coupon.validateUsable(totalAmount);
             discountAmount = coupon.calculateDiscount(totalAmount);
-            couponIssue.use(null);
         }
 
-        // 3. 주문 생성
+        // 3. 비관적 락: 재고 차감 (productId 오름차순 — 데드락 방지)
+        for (OrderItemCommand cmd : sorted) {
+            StockModel stock = stockService.getByProductIdForUpdate(cmd.productId());
+            stock.decrease(cmd.quantity());
+        }
+
+        // 4. 비관적 락: 쿠폰 사용 처리
+        if (couponIssueId != null) {
+            CouponIssueModel lockedCouponIssue = couponIssueService.getCouponIssueForUpdate(couponIssueId);
+            lockedCouponIssue.use(null);
+        }
+
+        // 5. 주문 생성
         OrderModel order = orderService.save(new OrderModel(userId, totalAmount, discountAmount, couponIssueId));
 
-        // 4. 쿠폰에 orderId 연결
+        // 6. 쿠폰에 orderId 연결
         if (couponIssueId != null) {
             CouponIssueModel couponIssue = couponIssueService.getCouponIssue(couponIssueId);
             couponIssue.setOrderId(order.getId());

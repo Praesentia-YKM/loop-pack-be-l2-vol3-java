@@ -9,5 +9,7 @@ public interface StockRepository {
 
     Optional<StockModel> findByProductId(Long productId);
 
+    Optional<StockModel> findByProductIdForUpdate(Long productId);
+
     List<StockModel> findAllByProductIdIn(List<Long> productIds);
 }

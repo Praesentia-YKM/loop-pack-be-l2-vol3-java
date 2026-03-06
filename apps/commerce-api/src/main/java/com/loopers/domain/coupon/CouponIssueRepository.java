@@ -9,6 +9,8 @@ public interface CouponIssueRepository {
 
     Optional<CouponIssueModel> findById(Long id);
 
+    Optional<CouponIssueModel> findByIdForUpdate(Long id);
+
     List<CouponIssueModel> findAllByUserId(Long userId);
 
     List<CouponIssueModel> findAllByCouponId(Long couponId);

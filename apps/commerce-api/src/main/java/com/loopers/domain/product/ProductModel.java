@@ -5,6 +5,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 
 @Entity
 @Table(name = "product")
@@ -24,6 +25,9 @@ public class ProductModel extends BaseEntity {
 
     @Column(name = "like_count", nullable = false)
     private int likeCount;
+
+    @Version
+    private Long version;
 
     protected ProductModel() {}
 

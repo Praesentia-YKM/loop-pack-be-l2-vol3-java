@@ -30,6 +30,11 @@ public class StockService {
             .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "재고를 찾을 수 없습니다."));
     }
 
+    public StockModel getByProductIdForUpdate(Long productId) {
+        return stockRepository.findByProductIdForUpdate(productId)
+            .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "재고를 찾을 수 없습니다."));
+    }
+
     @Transactional(readOnly = true)
     public Map<Long, StockModel> getByProductIds(List<Long> productIds) {
         return stockRepository.findAllByProductIdIn(productIds)

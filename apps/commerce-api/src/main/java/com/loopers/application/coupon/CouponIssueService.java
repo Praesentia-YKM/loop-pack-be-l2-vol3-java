@@ -38,6 +38,11 @@ public class CouponIssueService {
             .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "발급된 쿠폰을 찾을 수 없습니다."));
     }
 
+    public CouponIssueModel getCouponIssueForUpdate(Long couponIssueId) {
+        return couponIssueRepository.findByIdForUpdate(couponIssueId)
+            .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "발급된 쿠폰을 찾을 수 없습니다."));
+    }
+
     @Transactional(readOnly = true)
     public List<CouponIssueModel> getMyIssues(Long userId) {
         return couponIssueRepository.findAllByUserId(userId);

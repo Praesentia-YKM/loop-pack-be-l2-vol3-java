@@ -1,16 +1,16 @@
 package com.loopers.application.like;
 
 import com.loopers.domain.like.LikeModel;
-import com.loopers.domain.like.LikeToggleService;
 import com.loopers.domain.product.ProductModel;
 import com.loopers.application.product.ProductService;
+import com.loopers.support.error.CoreException;
+import com.loopers.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Optional;
 
 @RequiredArgsConstructor
 @Component
@@ -18,24 +18,29 @@ public class LikeFacade {
 
     private final LikeService likeService;
     private final ProductService productService;
-    private final LikeToggleService likeToggleService;
+    private final LikeTransactionService likeTransactionService;
 
-    @Transactional
+    private static final int MAX_RETRY = 3;
+
     public void like(Long userId, Long productId) {
-        ProductModel product = productService.getProduct(productId);
-        Optional<LikeModel> existing = likeService.findByUserIdAndProductId(userId, productId);
-
-        Optional<LikeModel> newLike = likeToggleService.like(existing, product, userId, productId);
-        newLike.ifPresent(likeService::save);
+        retryOnOptimisticLock(() -> likeTransactionService.doLike(userId, productId));
     }
 
-    @Transactional
     public void unlike(Long userId, Long productId) {
-        Optional<LikeModel> activeLike = likeService.findActiveLike(userId, productId);
-        if (activeLike.isEmpty()) return;
+        retryOnOptimisticLock(() -> likeTransactionService.doUnlike(userId, productId));
+    }
 
-        ProductModel product = productService.getProduct(activeLike.get().productId());
-        likeToggleService.unlike(activeLike.get(), product);
+    private void retryOnOptimisticLock(Runnable action) {
+        for (int attempt = 0; attempt < MAX_RETRY; attempt++) {
+            try {
+                action.run();
+                return;
+            } catch (ObjectOptimisticLockingFailureException e) {
+                if (attempt == MAX_RETRY - 1) {
+                    throw new CoreException(ErrorType.CONFLICT, "동시 요청이 많아 처리에 실패했습니다. 다시 시도해주세요.");
+                }
+            }
+        }
     }
 
     @Transactional(readOnly = true)
