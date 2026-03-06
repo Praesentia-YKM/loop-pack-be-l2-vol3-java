@@ -7,6 +7,7 @@ import com.loopers.application.like.LikeFacade;
 import com.loopers.application.order.OrderFacade;
 import com.loopers.application.order.OrderItemCommand;
 import com.loopers.application.product.ProductFacade;
+import com.loopers.application.product.ProductService;
 import com.loopers.application.stock.StockService;
 import com.loopers.domain.coupon.CouponIssueModel;
 import com.loopers.domain.coupon.CouponModel;
@@ -36,6 +37,7 @@ class ConcurrencyIntegrationTest {
     @Autowired private LikeFacade likeFacade;
     @Autowired private ProductFacade productFacade;
     @Autowired private BrandService brandService;
+    @Autowired private ProductService productService;
     @Autowired private StockService stockService;
     @Autowired private CouponService couponService;
     @Autowired private CouponIssueService couponIssueService;
@@ -197,6 +199,7 @@ class ConcurrencyIntegrationTest {
 
             // then
             assertThat(successCount.get()).isEqualTo(10);
+            assertThat(productService.getProduct(productId).likeCount()).isEqualTo(10);
         }
     }
 }

@@ -7,11 +7,12 @@ import com.loopers.domain.product.Money;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @RequiredArgsConstructor
 @Component
@@ -32,8 +33,8 @@ public class CouponService {
     }
 
     @Transactional(readOnly = true)
-    public List<CouponModel> getAllCoupons() {
-        return couponRepository.findAll();
+    public Page<CouponModel> getAllCoupons(Pageable pageable) {
+        return couponRepository.findAll(pageable);
     }
 
     @Transactional

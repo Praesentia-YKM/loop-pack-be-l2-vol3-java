@@ -5,7 +5,9 @@ import com.loopers.domain.coupon.CouponRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import java.util.Optional;
 
 @RequiredArgsConstructor
@@ -25,8 +27,8 @@ public class CouponRepositoryImpl implements CouponRepository {
     }
 
     @Override
-    public List<CouponModel> findAll() {
-        return couponJpaRepository.findAll();
+    public Page<CouponModel> findAll(Pageable pageable) {
+        return couponJpaRepository.findAll(pageable);
     }
 
     @Override
