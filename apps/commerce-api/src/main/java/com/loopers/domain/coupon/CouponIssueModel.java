@@ -8,7 +8,9 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "coupon_issue")
+@Table(name = "coupon_issue", uniqueConstraints = {
+    @UniqueConstraint(name = "uk_coupon_issue_user_coupon", columnNames = {"user_id", "coupon_id"})
+})
 public class CouponIssueModel extends BaseEntity {
 
     @Column(name = "coupon_id", nullable = false)

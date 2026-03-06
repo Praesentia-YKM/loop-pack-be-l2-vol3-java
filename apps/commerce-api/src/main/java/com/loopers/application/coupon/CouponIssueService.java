@@ -5,6 +5,7 @@ import com.loopers.domain.coupon.CouponIssueRepository;
 import com.loopers.domain.coupon.CouponModel;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
+import org.springframework.dao.DataIntegrityViolationException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -31,7 +32,11 @@ public class CouponIssueService {
             });
 
         CouponIssueModel couponIssue = new CouponIssueModel(coupon.getId(), userId, coupon.expiredAt());
-        return couponIssueRepository.save(couponIssue);
+        try {
+            return couponIssueRepository.save(couponIssue);
+        } catch (DataIntegrityViolationException e) {
+            throw new CoreException(ErrorType.CONFLICT, "이미 발급받은 쿠폰입니다.");
+        }
     }
 
     @Transactional(readOnly = true)
