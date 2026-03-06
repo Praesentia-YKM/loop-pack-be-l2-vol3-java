@@ -9,7 +9,7 @@ import java.util.List;
 
 public class OrderV1Dto {
 
-    public record CreateRequest(List<OrderItemRequest> items) {
+    public record CreateRequest(List<OrderItemRequest> items, Long couponIssueId) {
 
         public List<OrderItemCommand> toCommands() {
             return items.stream()
@@ -25,6 +25,8 @@ public class OrderV1Dto {
         Long orderId,
         String status,
         int totalAmount,
+        int discountAmount,
+        int finalAmount,
         List<OrderItemResponse> items,
         ZonedDateTime createdAt
     ) {
@@ -34,7 +36,8 @@ public class OrderV1Dto {
                 .map(OrderItemResponse::from)
                 .toList();
             return new OrderResponse(
-                info.orderId(), info.status(), info.totalAmount(), items, info.createdAt()
+                info.orderId(), info.status(), info.totalAmount(),
+                info.discountAmount(), info.finalAmount(), items, info.createdAt()
             );
         }
 
@@ -47,7 +50,10 @@ public class OrderV1Dto {
                 .toList();
             return new OrderResponse(
                 result.order().getId(), result.order().status().name(),
-                result.order().totalAmount().value(), items, result.order().getCreatedAt()
+                result.order().totalAmount().value(),
+                result.order().discountAmount().value(),
+                result.order().finalAmount().value(),
+                items, result.order().getCreatedAt()
             );
         }
     }

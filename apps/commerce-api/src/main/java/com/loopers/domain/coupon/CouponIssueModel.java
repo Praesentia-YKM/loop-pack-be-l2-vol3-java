@@ -100,4 +100,8 @@ public class CouponIssueModel extends BaseEntity {
     public Long orderId() {
         return orderId;
     }
+
+    public void setOrderId(Long orderId) {
+        this.orderId = orderId;
+    }
 }

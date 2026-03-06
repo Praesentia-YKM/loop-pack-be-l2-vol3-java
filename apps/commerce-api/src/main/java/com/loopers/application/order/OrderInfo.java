@@ -11,6 +11,8 @@ public record OrderInfo(
     Long userId,
     String status,
     int totalAmount,
+    int discountAmount,
+    int finalAmount,
     List<OrderItemInfo> items,
     ZonedDateTime createdAt
 ) {
@@ -21,14 +23,16 @@ public record OrderInfo(
             .toList();
         return new OrderInfo(
             order.getId(), order.userId(), order.status().name(),
-            order.totalAmount().value(), itemInfos, order.getCreatedAt()
+            order.totalAmount().value(), order.discountAmount().value(),
+            order.finalAmount().value(), itemInfos, order.getCreatedAt()
         );
     }
 
     public static OrderInfo summaryFrom(OrderModel order) {
         return new OrderInfo(
             order.getId(), order.userId(), order.status().name(),
-            order.totalAmount().value(), List.of(), order.getCreatedAt()
+            order.totalAmount().value(), order.discountAmount().value(),
+            order.finalAmount().value(), List.of(), order.getCreatedAt()
         );
     }
 

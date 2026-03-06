@@ -1,5 +1,9 @@
 package com.loopers.application.order;
 
+import com.loopers.application.coupon.CouponIssueService;
+import com.loopers.application.coupon.CouponService;
+import com.loopers.domain.coupon.CouponIssueModel;
+import com.loopers.domain.coupon.CouponModel;
 import com.loopers.domain.order.OrderItemModel;
 import com.loopers.domain.order.OrderModel;
 import com.loopers.domain.product.Money;
@@ -24,9 +28,12 @@ public class OrderFacade {
     private final OrderService orderService;
     private final ProductService productService;
     private final StockService stockService;
+    private final CouponIssueService couponIssueService;
+    private final CouponService couponService;
 
     @Transactional
-    public OrderResult placeOrder(Long userId, List<OrderItemCommand> commands) {
+    public OrderResult placeOrder(Long userId, List<OrderItemCommand> commands, Long couponIssueId) {
+        // 1. 상품 조회 + 금액 계산
         Money totalAmount = Money.ZERO;
         List<SnapshotHolder> snapshots = new ArrayList<>();
 
@@ -44,7 +51,25 @@ public class OrderFacade {
             ));
         }
 
-        OrderModel order = orderService.save(new OrderModel(userId, totalAmount));
+        // 2. 쿠폰 검증 + 할인 계산
+        Money discountAmount = Money.ZERO;
+        if (couponIssueId != null) {
+            CouponIssueModel couponIssue = couponIssueService.getCouponIssue(couponIssueId);
+            couponIssue.validateOwner(userId);
+            CouponModel coupon = couponService.getCoupon(couponIssue.couponId());
+            coupon.validateUsable(totalAmount);
+            discountAmount = coupon.calculateDiscount(totalAmount);
+            couponIssue.use(null);
+        }
+
+        // 3. 주문 생성
+        OrderModel order = orderService.save(new OrderModel(userId, totalAmount, discountAmount, couponIssueId));
+
+        // 4. 쿠폰에 orderId 연결
+        if (couponIssueId != null) {
+            CouponIssueModel couponIssue = couponIssueService.getCouponIssue(couponIssueId);
+            couponIssue.setOrderId(order.getId());
+        }
 
         List<OrderItemModel> items = snapshots.stream()
             .map(s -> new OrderItemModel(

@@ -35,7 +35,7 @@ public class OrderV1Controller {
         @RequestHeader("X-Loopers-LoginPw") String password
     ) {
         MemberModel member = memberFacade.authenticate(loginId, password);
-        OrderResult result = orderFacade.placeOrder(member.getId(), request.toCommands());
+        OrderResult result = orderFacade.placeOrder(member.getId(), request.toCommands(), request.couponIssueId());
         return ApiResponse.success(OrderV1Dto.OrderResponse.fromResult(result));
     }
 

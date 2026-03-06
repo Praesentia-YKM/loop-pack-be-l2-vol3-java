@@ -72,6 +72,15 @@ public class CouponModel extends BaseEntity {
         return orderAmount.value() >= this.minOrderAmount.value();
     }
 
+    public void validateUsable(Money orderAmount) {
+        if (isExpired()) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "만료된 쿠폰입니다.");
+        }
+        if (!meetsMinOrderAmount(orderAmount)) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "최소 주문 금액 조건을 충족하지 않습니다.");
+        }
+    }
+
     public void update(String name, CouponType type, int value, Money minOrderAmount, LocalDateTime expiredAt) {
         this.name = name;
         this.type = type;
