@@ -1,7 +1,5 @@
 package com.loopers.domain.like;
 
-import com.loopers.domain.product.Money;
-import com.loopers.domain.product.ProductModel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -21,50 +19,44 @@ class LikeToggleServiceTest {
         likeToggleService = new LikeToggleService();
     }
 
-    private ProductModel createProduct() {
-        return new ProductModel("에어맥스", "설명", new Money(129000), 1L);
-    }
-
     @DisplayName("좋아요 토글 - like")
     @Nested
     class Like {
 
-        @DisplayName("좋아요가 없으면 새로 생성하고 likeCount를 증가시킨다")
+        @DisplayName("좋아요가 없으면 새로 생성하고 countChanged=true를 반환한다")
         @Test
         void createsNewLikeWhenNoneExists() {
             // given
-            ProductModel product = createProduct();
             Optional<LikeModel> existing = Optional.empty();
 
             // when
-            Optional<LikeModel> result = likeToggleService.like(existing, product, 1L, 100L);
+            LikeResult result = likeToggleService.like(existing, 1L, 100L);
 
             // then
             assertAll(
-                () -> assertThat(result).isPresent(),
-                () -> assertThat(result.get().userId()).isEqualTo(1L),
-                () -> assertThat(result.get().productId()).isEqualTo(100L),
-                () -> assertThat(product.likeCount()).isEqualTo(1)
+                () -> assertThat(result.newLike()).isPresent(),
+                () -> assertThat(result.newLike().get().userId()).isEqualTo(1L),
+                () -> assertThat(result.newLike().get().productId()).isEqualTo(100L),
+                () -> assertThat(result.countChanged()).isTrue()
             );
         }
 
-        @DisplayName("삭제된 좋아요가 있으면 복구하고 likeCount를 증가시킨다")
+        @DisplayName("삭제된 좋아요가 있으면 복구하고 countChanged=true를 반환한다")
         @Test
         void restoresDeletedLike() {
             // given
-            ProductModel product = createProduct();
             LikeModel deletedLike = new LikeModel(1L, 100L);
             deletedLike.delete();
             Optional<LikeModel> existing = Optional.of(deletedLike);
 
             // when
-            Optional<LikeModel> result = likeToggleService.like(existing, product, 1L, 100L);
+            LikeResult result = likeToggleService.like(existing, 1L, 100L);
 
             // then
             assertAll(
-                () -> assertThat(result).isEmpty(),
-                () -> assertThat(deletedLike.getDeletedAt()).isNull(),
-                () -> assertThat(product.likeCount()).isEqualTo(1)
+                () -> assertThat(result.newLike()).isEmpty(),
+                () -> assertThat(result.countChanged()).isTrue(),
+                () -> assertThat(deletedLike.getDeletedAt()).isNull()
             );
         }
 
@@ -72,17 +64,16 @@ class LikeToggleServiceTest {
         @Test
         void skipsWhenAlreadyActive() {
             // given
-            ProductModel product = createProduct();
             LikeModel activeLike = new LikeModel(1L, 100L);
             Optional<LikeModel> existing = Optional.of(activeLike);
 
             // when
-            Optional<LikeModel> result = likeToggleService.like(existing, product, 1L, 100L);
+            LikeResult result = likeToggleService.like(existing, 1L, 100L);
 
             // then
             assertAll(
-                () -> assertThat(result).isEmpty(),
-                () -> assertThat(product.likeCount()).isEqualTo(0)
+                () -> assertThat(result.newLike()).isEmpty(),
+                () -> assertThat(result.countChanged()).isFalse()
             );
         }
     }
@@ -91,22 +82,17 @@ class LikeToggleServiceTest {
     @Nested
     class Unlike {
 
-        @DisplayName("활성 좋아요를 삭제하고 likeCount를 감소시킨다")
+        @DisplayName("활성 좋아요를 삭제한다")
         @Test
-        void deletesLikeAndDecrementsCount() {
+        void deletesLike() {
             // given
-            ProductModel product = createProduct();
-            product.incrementLikeCount();
             LikeModel activeLike = new LikeModel(1L, 100L);
 
             // when
-            likeToggleService.unlike(activeLike, product);
+            likeToggleService.unlike(activeLike);
 
             // then
-            assertAll(
-                () -> assertThat(activeLike.getDeletedAt()).isNotNull(),
-                () -> assertThat(product.likeCount()).isEqualTo(0)
-            );
+            assertThat(activeLike.getDeletedAt()).isNotNull();
         }
     }
 }

@@ -10,6 +10,10 @@ public interface ProductRepository {
 
     ProductModel save(ProductModel product);
 
+    int incrementLikeCount(Long productId);
+
+    int decrementLikeCount(Long productId);
+
     Optional<ProductModel> findById(Long id);
 
     Page<ProductModel> findAllByDeletedAtIsNull(Pageable pageable);

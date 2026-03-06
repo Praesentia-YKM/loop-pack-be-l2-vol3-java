@@ -182,7 +182,7 @@ class OrderV1ApiE2ETest {
             signupMember();
             placeOrder(List.of(new OrderV1Dto.OrderItemRequest(productId, 1)));
             var response = testRestTemplate.exchange("/api-admin/v1/orders?page=0&size=20",
-                HttpMethod.GET, null, new ParameterizedTypeReference<ApiResponse<Object>>() {});
+                HttpMethod.GET, new HttpEntity<>(null, adminHeaders()), new ParameterizedTypeReference<ApiResponse<Object>>() {});
             assertTrue(response.getStatusCode().is2xxSuccessful());
         }
     }
@@ -197,7 +197,7 @@ class OrderV1ApiE2ETest {
             var orderResponse = placeOrder(List.of(new OrderV1Dto.OrderItemRequest(productId, 1)));
             Long orderId = orderResponse.getBody().data().orderId();
             var response = testRestTemplate.exchange("/api-admin/v1/orders/" + orderId,
-                HttpMethod.GET, null, new ParameterizedTypeReference<ApiResponse<Object>>() {});
+                HttpMethod.GET, new HttpEntity<>(null, adminHeaders()), new ParameterizedTypeReference<ApiResponse<Object>>() {});
             assertTrue(response.getStatusCode().is2xxSuccessful());
         }
     }

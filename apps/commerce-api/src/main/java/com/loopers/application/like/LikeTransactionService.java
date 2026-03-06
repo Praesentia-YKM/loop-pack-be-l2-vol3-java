@@ -1,8 +1,8 @@
 package com.loopers.application.like;
 
+import com.loopers.domain.like.LikeResult;
 import com.loopers.domain.like.LikeModel;
 import com.loopers.domain.like.LikeToggleService;
-import com.loopers.domain.product.ProductModel;
 import com.loopers.application.product.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -20,11 +20,14 @@ public class LikeTransactionService {
 
     @Transactional
     public void doLike(Long userId, Long productId) {
-        ProductModel product = productService.getProduct(productId);
         Optional<LikeModel> existing = likeService.findByUserIdAndProductId(userId, productId);
 
-        Optional<LikeModel> newLike = likeToggleService.like(existing, product, userId, productId);
-        newLike.ifPresent(likeService::save);
+        LikeResult result = likeToggleService.like(existing, userId, productId);
+        result.newLike().ifPresent(likeService::save);
+
+        if (result.countChanged()) {
+            productService.incrementLikeCount(productId);
+        }
     }
 
     @Transactional
@@ -32,7 +35,7 @@ public class LikeTransactionService {
         Optional<LikeModel> activeLike = likeService.findActiveLike(userId, productId);
         if (activeLike.isEmpty()) return;
 
-        ProductModel product = productService.getProduct(activeLike.get().productId());
-        likeToggleService.unlike(activeLike.get(), product);
+        likeToggleService.unlike(activeLike.get());
+        productService.decrementLikeCount(activeLike.get().productId());
     }
 }
