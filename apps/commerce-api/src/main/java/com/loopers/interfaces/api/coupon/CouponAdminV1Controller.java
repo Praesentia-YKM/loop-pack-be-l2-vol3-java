@@ -4,6 +4,8 @@ import com.loopers.application.coupon.CouponIssueService;
 import com.loopers.application.coupon.CouponService;
 import com.loopers.domain.coupon.CouponModel;
 import com.loopers.interfaces.api.ApiResponse;
+import com.loopers.interfaces.auth.AdminInfo;
+import com.loopers.interfaces.auth.AdminUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,19 +19,26 @@ public class CouponAdminV1Controller {
     private final CouponIssueService couponIssueService;
 
     @GetMapping("/api-admin/v1/coupons")
-    public ApiResponse<Page<CouponAdminV1Dto.CouponResponse>> getCoupons(Pageable pageable) {
+    public ApiResponse<Page<CouponAdminV1Dto.CouponResponse>> getCoupons(
+        @AdminUser AdminInfo admin,
+        Pageable pageable
+    ) {
         Page<CouponModel> coupons = couponService.getAllCoupons(pageable);
         return ApiResponse.success(coupons.map(CouponAdminV1Dto.CouponResponse::from));
     }
 
     @GetMapping("/api-admin/v1/coupons/{couponId}")
-    public ApiResponse<CouponAdminV1Dto.CouponResponse> getCoupon(@PathVariable Long couponId) {
+    public ApiResponse<CouponAdminV1Dto.CouponResponse> getCoupon(
+        @AdminUser AdminInfo admin,
+        @PathVariable Long couponId
+    ) {
         CouponModel coupon = couponService.getCoupon(couponId);
         return ApiResponse.success(CouponAdminV1Dto.CouponResponse.from(coupon));
     }
 
     @PostMapping("/api-admin/v1/coupons")
     public ApiResponse<CouponAdminV1Dto.CouponResponse> createCoupon(
+        @AdminUser AdminInfo admin,
         @RequestBody CouponAdminV1Dto.CreateRequest request
     ) {
         CouponModel coupon = couponService.create(
@@ -41,6 +50,7 @@ public class CouponAdminV1Controller {
 
     @PutMapping("/api-admin/v1/coupons/{couponId}")
     public ApiResponse<CouponAdminV1Dto.CouponResponse> updateCoupon(
+        @AdminUser AdminInfo admin,
         @PathVariable Long couponId,
         @RequestBody CouponAdminV1Dto.UpdateRequest request
     ) {
@@ -52,14 +62,19 @@ public class CouponAdminV1Controller {
     }
 
     @DeleteMapping("/api-admin/v1/coupons/{couponId}")
-    public ApiResponse<Void> deleteCoupon(@PathVariable Long couponId) {
+    public ApiResponse<Void> deleteCoupon(
+        @AdminUser AdminInfo admin,
+        @PathVariable Long couponId
+    ) {
         couponService.delete(couponId);
         return ApiResponse.success(null);
     }
 
     @GetMapping("/api-admin/v1/coupons/{couponId}/issues")
     public ApiResponse<Page<CouponV1Dto.CouponIssueResponse>> getCouponIssues(
-        @PathVariable Long couponId, Pageable pageable
+        @AdminUser AdminInfo admin,
+        @PathVariable Long couponId,
+        Pageable pageable
     ) {
         return ApiResponse.success(
             couponIssueService.getIssuesByCoupon(couponId, pageable)

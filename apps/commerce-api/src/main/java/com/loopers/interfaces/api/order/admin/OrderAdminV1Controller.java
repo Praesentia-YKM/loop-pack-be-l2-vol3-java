@@ -3,6 +3,8 @@ package com.loopers.interfaces.api.order.admin;
 import com.loopers.application.order.OrderFacade;
 import com.loopers.application.order.OrderInfo;
 import com.loopers.interfaces.api.ApiResponse;
+import com.loopers.interfaces.auth.AdminInfo;
+import com.loopers.interfaces.auth.AdminUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -21,6 +23,7 @@ public class OrderAdminV1Controller {
 
     @GetMapping
     public ApiResponse<Page<OrderAdminV1Dto.OrderSummaryResponse>> getAll(
+        @AdminUser AdminInfo admin,
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "20") int size
     ) {
@@ -29,7 +32,10 @@ public class OrderAdminV1Controller {
     }
 
     @GetMapping("/{orderId}")
-    public ApiResponse<OrderAdminV1Dto.OrderResponse> getOrder(@PathVariable Long orderId) {
+    public ApiResponse<OrderAdminV1Dto.OrderResponse> getOrder(
+        @AdminUser AdminInfo admin,
+        @PathVariable Long orderId
+    ) {
         OrderInfo info = orderFacade.getOrderForAdmin(orderId);
         return ApiResponse.success(OrderAdminV1Dto.OrderResponse.from(info));
     }
