@@ -2,9 +2,12 @@ package com.loopers.infrastructure.product;
 
 import com.loopers.domain.product.ProductModel;
 import com.loopers.domain.product.ProductRepository;
+import com.loopers.domain.product.ProductSortType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -17,38 +20,34 @@ public class ProductRepositoryImpl implements ProductRepository {
     private final ProductJpaRepository productJpaRepository;
 
     @Override
-    public ProductModel save(ProductModel product) {
-        return productJpaRepository.save(product);
-    }
-
-    @Override
     public Optional<ProductModel> findById(Long id) {
-        return productJpaRepository.findById(id);
-    }
-
-    @Override
-    public Page<ProductModel> findAllByDeletedAtIsNull(Pageable pageable) {
-        return productJpaRepository.findAllByDeletedAtIsNull(pageable);
-    }
-
-    @Override
-    public Page<ProductModel> findAllByBrandIdAndDeletedAtIsNull(Long brandId, Pageable pageable) {
-        return productJpaRepository.findAllByBrandIdAndDeletedAtIsNull(brandId, pageable);
-    }
-
-    @Override
-    public Page<ProductModel> findAll(Pageable pageable) {
-        return productJpaRepository.findAll(pageable);
-    }
-
-    @Override
-    public Page<ProductModel> findAllByBrandId(Long brandId, Pageable pageable) {
-        return productJpaRepository.findAllByBrandId(brandId, pageable);
+        return productJpaRepository.findByIdAndDeletedAtIsNull(id);
     }
 
     @Override
     public List<ProductModel> findAllByBrandId(Long brandId) {
-        return productJpaRepository.findAllByBrandId(brandId);
+        return productJpaRepository.findAllByBrandIdAndDeletedAtIsNull(brandId);
+    }
+
+    @Override
+    public Page<ProductModel> findAll(Pageable pageable, ProductSortType sortType) {
+        Sort sort = toSort(sortType);
+        Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
+        return productJpaRepository.findAllByDeletedAtIsNull(sortedPageable);
+    }
+
+    @Override
+    public ProductModel save(ProductModel product) {
+        return productJpaRepository.save(product);
+    }
+
+    private Sort toSort(ProductSortType sortType) {
+        return switch (sortType) {
+            case CREATED_DESC -> Sort.by(Sort.Direction.DESC, "createdAt");
+            case PRICE_ASC -> Sort.by(Sort.Direction.ASC, "price.value");
+            case PRICE_DESC -> Sort.by(Sort.Direction.DESC, "price.value");
+            case LIKES_DESC -> Sort.by(Sort.Direction.DESC, "likeCount");
+        };
     }
 
     @Override

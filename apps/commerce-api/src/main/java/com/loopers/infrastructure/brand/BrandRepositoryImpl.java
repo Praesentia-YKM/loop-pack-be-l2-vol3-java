@@ -17,23 +17,23 @@ public class BrandRepositoryImpl implements BrandRepository {
     private final BrandJpaRepository brandJpaRepository;
 
     @Override
-    public BrandModel save(BrandModel brand) {
-        return brandJpaRepository.save(brand);
-    }
-
-    @Override
     public Optional<BrandModel> findById(Long id) {
-        return brandJpaRepository.findById(id);
+        return brandJpaRepository.findByIdAndDeletedAtIsNull(id);
     }
 
     @Override
     public Optional<BrandModel> findByName(String name) {
-        return brandJpaRepository.findByNameValue(name);
+        return brandJpaRepository.findByNameAndDeletedAtIsNull(name);
     }
 
     @Override
     public Page<BrandModel> findAll(Pageable pageable) {
-        return brandJpaRepository.findAll(pageable);
+        return brandJpaRepository.findAllByDeletedAtIsNull(pageable);
+    }
+
+    @Override
+    public BrandModel save(BrandModel brand) {
+        return brandJpaRepository.save(brand);
     }
 
     @Override

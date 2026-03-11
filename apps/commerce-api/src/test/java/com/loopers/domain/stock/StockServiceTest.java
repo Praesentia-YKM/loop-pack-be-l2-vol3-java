@@ -2,11 +2,11 @@ package com.loopers.domain.stock;
 
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -18,82 +18,68 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 
 @ExtendWith(MockitoExtension.class)
 class StockServiceTest {
 
+    @InjectMocks
+    private StockService stockService;
+
     @Mock
     private StockRepository stockRepository;
 
-    private StockService stockService;
-
-    @BeforeEach
-    void setUp() {
-        stockService = new StockService(stockRepository);
-    }
-
-    @DisplayName("재고 생성")
-    @Nested
-    class Create {
-
-        @DisplayName("productId와 quantity로 재고를 생성한다")
-        @Test
-        void createsStock() {
-            // given
-            Long productId = 1L;
-            int quantity = 100;
-            when(stockRepository.save(any(StockModel.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
-
-            // when
-            StockModel result = stockService.create(productId, quantity);
-
-            // then
-            assertAll(
-                () -> assertThat(result.productId()).isEqualTo(productId),
-                () -> assertThat(result.quantity()).isEqualTo(quantity)
-            );
-            verify(stockRepository).save(any(StockModel.class));
-        }
-    }
-
-    @DisplayName("상품별 재고 조회")
+    @DisplayName("재고 조회")
     @Nested
     class GetByProductId {
 
-        @DisplayName("존재하면 재고를 반환한다")
+        @DisplayName("상품ID로 재고를 조회한다")
         @Test
-        void returnsStockWhenExists() {
-            // given
+        void returnsStockForProductId() {
+            // arrange
             Long productId = 1L;
             StockModel stock = new StockModel(productId, 100);
-            when(stockRepository.findByProductId(productId)).thenReturn(Optional.of(stock));
-
-            // when
+            given(stockRepository.findByProductId(productId)).willReturn(Optional.of(stock));
+            // act
             StockModel result = stockService.getByProductId(productId);
-
-            // then
+            // assert
             assertAll(
-                () -> assertThat(result.productId()).isEqualTo(productId),
-                () -> assertThat(result.quantity()).isEqualTo(100)
+                () -> assertThat(result.getProductId()).isEqualTo(productId),
+                () -> assertThat(result.getQuantity()).isEqualTo(100)
             );
         }
 
-        @DisplayName("미존재 시 NOT_FOUND 예외를 던진다")
+        @DisplayName("재고가 없으면 NOT_FOUND 예외가 발생한다")
         @Test
-        void throwsWhenNotFound() {
-            // given
+        void throwsOnNonExistentStock() {
+            // arrange
             Long productId = 999L;
-            when(stockRepository.findByProductId(productId)).thenReturn(Optional.empty());
+            given(stockRepository.findByProductId(productId)).willReturn(Optional.empty());
+            // act
+            CoreException exception = assertThrows(CoreException.class, () -> {
+                stockService.getByProductId(productId);
+            });
+            // assert
+            assertThat(exception.getErrorType()).isEqualTo(ErrorType.NOT_FOUND);
+        }
+    }
 
-            // when
-            CoreException result = assertThrows(CoreException.class,
-                () -> stockService.getByProductId(productId));
+    @DisplayName("재고 저장")
+    @Nested
+    class Save {
 
-            // then
-            assertThat(result.getErrorType()).isEqualTo(ErrorType.NOT_FOUND);
+        @DisplayName("재고를 저장한다")
+        @Test
+        void savesStock() {
+            // arrange
+            StockModel stock = new StockModel(1L, 100);
+            given(stockRepository.save(any(StockModel.class))).willReturn(stock);
+            // act
+            StockModel result = stockService.save(1L, 100);
+            // assert
+            assertThat(result.getQuantity()).isEqualTo(100);
+            then(stockRepository).should().save(any(StockModel.class));
         }
     }
 
