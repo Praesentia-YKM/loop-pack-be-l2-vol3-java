@@ -1,5 +1,6 @@
 package com.loopers.interfaces.api.product;
 
+import com.loopers.application.product.ProductDetail;
 import com.loopers.application.product.ProductFacade;
 import com.loopers.domain.product.ProductSortType;
 import com.loopers.interfaces.api.ApiResponse;
@@ -20,24 +21,19 @@ public class ProductV1Controller implements ProductV1ApiSpec {
     private final ProductFacade productFacade;
 
     @GetMapping
-    @Override
-    public ApiResponse<Page<ProductV1Dto.ProductSummaryResponse>> getAll(
-        Pageable pageable,
-        @RequestParam(value = "sortType", defaultValue = "CREATED_DESC") String sortType
+    public ApiResponse<Page<ProductV1Dto.ProductResponse>> getProducts(
+        @RequestParam(required = false) Long brandId,
+        @RequestParam(defaultValue = "LATEST") ProductSortType sort,
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "20") int size
     ) {
-        ProductSortType sort = ProductSortType.valueOf(sortType);
-        Page<ProductV1Dto.ProductSummaryResponse> response = productFacade.getAllForCustomer(pageable, sort)
-            .map(ProductV1Dto.ProductSummaryResponse::from);
-        return ApiResponse.success(response);
+        Page<ProductDetail> products = productFacade.getProducts(brandId, sort, PageRequest.of(page, size));
+        return ApiResponse.success(products.map(ProductV1Dto.ProductResponse::from));
     }
 
     @GetMapping("/{productId}")
-    @Override
-    public ApiResponse<ProductV1Dto.ProductDetailResponse> getById(
-        @PathVariable(value = "productId") Long productId
-    ) {
-        return ApiResponse.success(
-            ProductV1Dto.ProductDetailResponse.from(productFacade.getDetailForCustomer(productId))
-        );
+    public ApiResponse<ProductV1Dto.ProductResponse> getProduct(@PathVariable Long productId) {
+        ProductDetail detail = productFacade.getProduct(productId);
+        return ApiResponse.success(ProductV1Dto.ProductResponse.from(detail));
     }
 }

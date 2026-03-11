@@ -25,11 +25,15 @@ import static org.mockito.Mockito.never;
 @ExtendWith(MockitoExtension.class)
 class BrandServiceTest {
 
-    @InjectMocks
-    private BrandService brandService;
-
     @Mock
     private BrandRepository brandRepository;
+
+    private BrandService brandService;
+
+    @BeforeEach
+    void setUp() {
+        brandService = new BrandService(brandRepository);
+    }
 
     @DisplayName("브랜드 등록")
     @Nested
@@ -147,15 +151,59 @@ class BrandServiceTest {
 
         @DisplayName("존재하는 브랜드를 soft delete 한다")
         @Test
-        void softDeletesExistingBrand() {
-            // arrange
-            Long id = 1L;
-            BrandModel brand = new BrandModel("나이키", "스포츠");
-            given(brandRepository.findById(id)).willReturn(Optional.of(brand));
-            // act
-            brandService.delete(id);
-            // assert
+        void softDeletesSuccessfully() {
+            // given
+            Long brandId = 1L;
+            BrandModel brand = new BrandModel(new BrandName("나이키"), "스포츠 브랜드");
+            when(brandRepository.findById(brandId)).thenReturn(Optional.of(brand));
+
+            // when
+            brandService.delete(brandId);
+
+            // then
             assertThat(brand.getDeletedAt()).isNotNull();
+        }
+
+        @DisplayName("미존재 브랜드면 NOT_FOUND 예외를 던진다")
+        @Test
+        void throwsWhenNotFound() {
+            // given
+            Long brandId = 999L;
+            when(brandRepository.findById(brandId)).thenReturn(Optional.empty());
+
+            // when
+            CoreException result = assertThrows(CoreException.class,
+                () -> brandService.delete(brandId));
+
+            // then
+            assertThat(result.getErrorType()).isEqualTo(ErrorType.NOT_FOUND);
+        }
+    }
+
+    @DisplayName("브랜드 목록 조회")
+    @Nested
+    class GetAll {
+
+        @DisplayName("페이징된 결과를 반환한다")
+        @Test
+        void returnsPagedResult() {
+            // given
+            Pageable pageable = PageRequest.of(0, 10);
+            List<BrandModel> brands = List.of(
+                new BrandModel(new BrandName("나이키"), "스포츠"),
+                new BrandModel(new BrandName("아디다스"), "스포츠")
+            );
+            Page<BrandModel> page = new PageImpl<>(brands, pageable, brands.size());
+            when(brandRepository.findAll(pageable)).thenReturn(page);
+
+            // when
+            Page<BrandModel> result = brandService.getAll(pageable);
+
+            // then
+            assertAll(
+                () -> assertThat(result.getTotalElements()).isEqualTo(2),
+                () -> assertThat(result.getContent()).hasSize(2)
+            );
         }
     }
 }

@@ -10,6 +10,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -78,6 +80,32 @@ class StockServiceTest {
             // assert
             assertThat(result.getQuantity()).isEqualTo(100);
             then(stockRepository).should().save(any(StockModel.class));
+        }
+    }
+
+    @DisplayName("상품별 재고 배치 조회")
+    @Nested
+    class GetByProductIds {
+
+        @DisplayName("productId 목록으로 재고 Map을 반환한다")
+        @Test
+        void returnsMapOfStocks() {
+            // given
+            List<Long> productIds = List.of(1L, 2L);
+            StockModel stock1 = new StockModel(1L, 100);
+            StockModel stock2 = new StockModel(2L, 50);
+            when(stockRepository.findAllByProductIdIn(productIds))
+                .thenReturn(List.of(stock1, stock2));
+
+            // when
+            Map<Long, StockModel> result = stockService.getByProductIds(productIds);
+
+            // then
+            assertAll(
+                () -> assertThat(result).hasSize(2),
+                () -> assertThat(result.get(1L).quantity()).isEqualTo(100),
+                () -> assertThat(result.get(2L).quantity()).isEqualTo(50)
+            );
         }
     }
 }

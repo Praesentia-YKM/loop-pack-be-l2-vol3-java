@@ -1,5 +1,6 @@
 package com.loopers.domain.product;
 
+import com.loopers.application.product.ProductFacade;
 import com.loopers.domain.brand.BrandService;
 import com.loopers.domain.stock.StockModel;
 import com.loopers.domain.stock.StockService;
@@ -26,6 +27,9 @@ class ProductServiceIntegrationTest {
     private ProductService productService;
 
     @Autowired
+    private ProductFacade productFacade;
+
+    @Autowired
     private BrandService brandService;
 
     @Autowired
@@ -43,6 +47,10 @@ class ProductServiceIntegrationTest {
         return brandService.register(name, "설명").getId();
     }
 
+    private ProductModel createProduct(String name, String description, Money price, Long brandId, int initialStock) {
+        return productFacade.register(name, description, price, brandId, initialStock);
+    }
+
     @DisplayName("상품 등록")
     @Nested
     class Register {
@@ -54,7 +62,7 @@ class ProductServiceIntegrationTest {
             Long brandId = createBrand("나이키");
 
             // when
-            ProductModel result = productService.register("에어맥스 90", "러닝화", new Money(129000), brandId, 100);
+            ProductModel result = createProduct("에어맥스 90", "러닝화", new Money(129000), brandId, 100);
 
             // then
             assertAll(
@@ -77,7 +85,7 @@ class ProductServiceIntegrationTest {
 
             // when
             CoreException result = assertThrows(CoreException.class,
-                () -> productService.register("에어맥스", "러닝화", new Money(129000), brandId, 100));
+                () -> createProduct("에어맥스", "러닝화", new Money(129000), brandId, 100));
 
             // then
             assertThat(result.getErrorType()).isEqualTo(ErrorType.NOT_FOUND);
@@ -93,7 +101,7 @@ class ProductServiceIntegrationTest {
         void returnsProduct() {
             // given
             Long brandId = createBrand("나이키");
-            ProductModel saved = productService.register("에어맥스 90", "러닝화", new Money(129000), brandId, 100);
+            ProductModel saved = createProduct("에어맥스 90", "러닝화", new Money(129000), brandId, 100);
 
             // when
             ProductModel result = productService.getProduct(saved.getId());
@@ -107,7 +115,7 @@ class ProductServiceIntegrationTest {
         void throwsWhenDeleted() {
             // given
             Long brandId = createBrand("나이키");
-            ProductModel saved = productService.register("에어맥스 90", "러닝화", new Money(129000), brandId, 100);
+            ProductModel saved = createProduct("에어맥스 90", "러닝화", new Money(129000), brandId, 100);
             productService.delete(saved.getId());
 
             // when
@@ -128,9 +136,9 @@ class ProductServiceIntegrationTest {
         void returnsNotDeletedProducts() {
             // given
             Long brandId = createBrand("나이키");
-            productService.register("에어맥스 90", "러닝화", new Money(129000), brandId, 100);
-            productService.register("에어맥스 95", "러닝화", new Money(159000), brandId, 50);
-            ProductModel deleted = productService.register("삭제될 상품", "설명", new Money(99000), brandId, 10);
+            createProduct("에어맥스 90", "러닝화", new Money(129000), brandId, 100);
+            createProduct("에어맥스 95", "러닝화", new Money(159000), brandId, 50);
+            ProductModel deleted = createProduct("삭제될 상품", "설명", new Money(99000), brandId, 10);
             productService.delete(deleted.getId());
 
             // when
@@ -146,8 +154,8 @@ class ProductServiceIntegrationTest {
             // given
             Long nikeId = createBrand("나이키");
             Long adidasId = createBrand("아디다스");
-            productService.register("에어맥스 90", "러닝화", new Money(129000), nikeId, 100);
-            productService.register("슈퍼스타", "캐주얼", new Money(99000), adidasId, 50);
+            createProduct("에어맥스 90", "러닝화", new Money(129000), nikeId, 100);
+            createProduct("슈퍼스타", "캐주얼", new Money(99000), adidasId, 50);
 
             // when
             Page<ProductModel> result = productService.getProducts(nikeId, ProductSortType.LATEST, PageRequest.of(0, 10));
@@ -167,7 +175,7 @@ class ProductServiceIntegrationTest {
         void updatesSuccessfully() {
             // given
             Long brandId = createBrand("나이키");
-            ProductModel saved = productService.register("에어맥스 90", "러닝화", new Money(129000), brandId, 100);
+            ProductModel saved = createProduct("에어맥스 90", "러닝화", new Money(129000), brandId, 100);
 
             // when
             ProductModel result = productService.update(saved.getId(), "에어맥스 95", "뉴 러닝화", new Money(159000));
@@ -190,7 +198,7 @@ class ProductServiceIntegrationTest {
         void excludedFromCustomerQueryAfterDelete() {
             // given
             Long brandId = createBrand("나이키");
-            ProductModel saved = productService.register("에어맥스 90", "러닝화", new Money(129000), brandId, 100);
+            ProductModel saved = createProduct("에어맥스 90", "러닝화", new Money(129000), brandId, 100);
 
             // when
             productService.delete(saved.getId());
@@ -206,7 +214,7 @@ class ProductServiceIntegrationTest {
         void includedInAdminQueryAfterDelete() {
             // given
             Long brandId = createBrand("나이키");
-            ProductModel saved = productService.register("에어맥스 90", "러닝화", new Money(129000), brandId, 100);
+            ProductModel saved = createProduct("에어맥스 90", "러닝화", new Money(129000), brandId, 100);
 
             // when
             productService.delete(saved.getId());
@@ -226,8 +234,8 @@ class ProductServiceIntegrationTest {
         void softDeletesAllProducts() {
             // given
             Long brandId = createBrand("나이키");
-            productService.register("에어맥스 90", "러닝화", new Money(129000), brandId, 100);
-            productService.register("에어맥스 95", "러닝화", new Money(159000), brandId, 50);
+            createProduct("에어맥스 90", "러닝화", new Money(129000), brandId, 100);
+            createProduct("에어맥스 95", "러닝화", new Money(159000), brandId, 50);
 
             // when
             productService.deleteAllByBrandId(brandId);

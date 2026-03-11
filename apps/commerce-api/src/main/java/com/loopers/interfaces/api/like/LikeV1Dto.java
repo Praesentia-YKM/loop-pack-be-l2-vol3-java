@@ -1,19 +1,26 @@
 package com.loopers.interfaces.api.like;
 
-import com.loopers.application.like.LikeInfo;
+import com.loopers.domain.like.LikeModel;
+import com.loopers.domain.product.ProductModel;
 
 import java.time.ZonedDateTime;
 
 public class LikeV1Dto {
 
     public record LikeResponse(
-        Long likeId, Long productId, String productName,
-        int productPrice, String brandName, ZonedDateTime likedAt
+        Long likeId,
+        Long productId,
+        String productName,
+        int productPrice,
+        ZonedDateTime likedAt
     ) {
-        public static LikeResponse from(LikeInfo info) {
+        public static LikeResponse from(LikeModel like, ProductModel product) {
             return new LikeResponse(
-                info.likeId(), info.productId(), info.productName(),
-                info.productPrice(), info.brandName(), info.likedAt()
+                like.getId(),
+                product.getId(),
+                product.name(),
+                product.price().value(),
+                like.getCreatedAt()
             );
         }
     }

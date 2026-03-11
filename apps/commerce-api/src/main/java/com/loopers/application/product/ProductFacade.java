@@ -8,8 +8,6 @@ import com.loopers.domain.product.ProductService;
 import com.loopers.domain.product.ProductSortType;
 import com.loopers.domain.stock.StockModel;
 import com.loopers.domain.stock.StockService;
-import com.loopers.support.error.CoreException;
-import com.loopers.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,67 +23,55 @@ public class ProductFacade {
     private final StockService stockService;
 
     @Transactional
-    public ProductInfo.AdminDetail register(String name, String description, Money price, Long brandId, int stockQuantity) {
-        BrandModel brand = brandService.getById(brandId);
-        if (brand.getDeletedAt() != null) {
-            throw new CoreException(ErrorType.BAD_REQUEST, "삭제된 브랜드에는 상품을 등록할 수 없습니다.");
-        }
+    public ProductModel register(String name, String description, Money price, Long brandId, int initialStock) {
+        brandService.getBrand(brandId);
         ProductModel product = productService.register(name, description, price, brandId);
-        StockModel stock = stockService.save(product.getId(), stockQuantity);
-        return ProductInfo.AdminDetail.from(product, brand, stock);
+        stockService.create(product.getId(), initialStock);
+        return product;
     }
 
-    public Page<ProductInfo.Summary> getAllForCustomer(Pageable pageable, ProductSortType sortType) {
-        Page<ProductModel> products = productService.getAll(pageable, sortType);
-        return products.map(product -> {
-            BrandModel brand = brandService.getById(product.getBrandId());
-            StockModel stock = stockService.getByProductId(product.getId());
-            return ProductInfo.Summary.from(product, brand, stock);
-        });
-    }
-
-    public ProductInfo.Detail getDetailForCustomer(Long id) {
-        ProductModel product = productService.getById(id);
-        BrandModel brand = brandService.getById(product.getBrandId());
-        StockModel stock = stockService.getByProductId(product.getId());
-        return ProductInfo.Detail.from(product, brand, stock);
-    }
-
-    public Page<ProductInfo.AdminSummary> getAllForAdmin(Pageable pageable, ProductSortType sortType) {
-        Page<ProductModel> products = productService.getAll(pageable, sortType);
-        return products.map(product -> {
-            BrandModel brand = brandService.getById(product.getBrandId());
-            StockModel stock = stockService.getByProductId(product.getId());
-            return ProductInfo.AdminSummary.from(product, brand, stock);
-        });
-    }
-
-    public ProductInfo.AdminDetail getDetailForAdmin(Long id) {
-        ProductModel product = productService.getById(id);
-        BrandModel brand = brandService.getById(product.getBrandId());
-        StockModel stock = stockService.getByProductId(product.getId());
-        return ProductInfo.AdminDetail.from(product, brand, stock);
-    }
-
-    @Transactional
-    public ProductInfo.AdminDetail update(Long id, String name, String description, Money price) {
-        ProductModel product = productService.update(id, name, description, price);
-        BrandModel brand = brandService.getById(product.getBrandId());
-        StockModel stock = stockService.getByProductId(product.getId());
-        return ProductInfo.AdminDetail.from(product, brand, stock);
-    }
-
-    @Transactional
-    public void delete(Long id) {
-        productService.delete(id);
-    }
-
-    @Transactional
-    public ProductInfo.AdminDetail updateStock(Long productId, int quantity) {
-        ProductModel product = productService.getById(productId);
+    @Transactional(readOnly = true)
+    public ProductDetail getProduct(Long productId) {
+        ProductModel product = productService.getProduct(productId);
+        String brandName = getBrandName(product.brandId());
         StockModel stock = stockService.getByProductId(productId);
-        stock.update(quantity);
-        BrandModel brand = brandService.getById(product.getBrandId());
-        return ProductInfo.AdminDetail.from(product, brand, stock);
+        return ProductDetail.ofCustomer(product, brandName, stock.toStatus());
+    }
+
+    @Transactional(readOnly = true)
+    public ProductDetail getProductForAdmin(Long productId) {
+        ProductModel product = productService.getProductForAdmin(productId);
+        String brandName = getBrandName(product.brandId());
+        StockModel stock = stockService.getByProductId(productId);
+        return ProductDetail.ofAdmin(product, brandName, stock.quantity());
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ProductDetail> getProducts(Long brandId, ProductSortType sortType, Pageable pageable) {
+        Page<ProductModel> products = productService.getProducts(brandId, sortType, pageable);
+        return products.map(product -> {
+            String brandName = getBrandName(product.brandId());
+            StockModel stock = stockService.getByProductId(product.getId());
+            return ProductDetail.ofCustomer(product, brandName, stock.toStatus());
+        });
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ProductDetail> getProductsForAdmin(Long brandId, Pageable pageable) {
+        Page<ProductModel> products = productService.getProductsForAdmin(brandId, pageable);
+        return products.map(product -> {
+            String brandName = getBrandName(product.brandId());
+            StockModel stock = stockService.getByProductId(product.getId());
+            return ProductDetail.ofAdmin(product, brandName, stock.quantity());
+        });
+    }
+
+    private String getBrandName(Long brandId) {
+        try {
+            BrandModel brand = brandService.getBrandForAdmin(brandId);
+            return brand.name().value();
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

@@ -1,6 +1,5 @@
 package com.loopers.application.brand;
 
-import com.loopers.domain.brand.BrandModel;
 import com.loopers.domain.brand.BrandService;
 import com.loopers.domain.product.ProductService;
 import lombok.RequiredArgsConstructor;
@@ -17,27 +16,28 @@ public class BrandFacade {
     private final ProductService productService;
 
     public BrandInfo register(String name, String description) {
-        BrandModel brand = brandService.register(name, description);
-        return BrandInfo.from(brand);
+        return BrandInfo.from(brandService.register(name, description));
     }
 
-    public BrandInfo getById(Long id) {
-        BrandModel brand = brandService.getById(id);
-        return BrandInfo.from(brand);
+    public BrandInfo getBrand(Long brandId) {
+        return BrandInfo.from(brandService.getBrand(brandId));
+    }
+
+    public BrandInfo getBrandForAdmin(Long brandId) {
+        return BrandInfo.from(brandService.getBrandForAdmin(brandId));
+    }
+
+    public BrandInfo update(Long brandId, String name, String description) {
+        return BrandInfo.from(brandService.update(brandId, name, description));
+    }
+
+    @Transactional
+    public void delete(Long brandId) {
+        brandService.delete(brandId);
+        productService.deleteAllByBrandId(brandId);
     }
 
     public Page<BrandInfo> getAll(Pageable pageable) {
         return brandService.getAll(pageable).map(BrandInfo::from);
-    }
-
-    public BrandInfo update(Long id, String name, String description) {
-        BrandModel brand = brandService.update(id, name, description);
-        return BrandInfo.from(brand);
-    }
-
-    @Transactional
-    public void delete(Long id) {
-        brandService.delete(id);
-        productService.softDeleteByBrandId(id);
     }
 }

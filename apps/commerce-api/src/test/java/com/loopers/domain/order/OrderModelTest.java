@@ -1,12 +1,15 @@
 package com.loopers.domain.order;
 
 import com.loopers.domain.product.Money;
+import com.loopers.support.error.CoreException;
+import com.loopers.support.error.ErrorType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class OrderModelTest {
 
@@ -14,52 +17,54 @@ class OrderModelTest {
     @Nested
     class Create {
 
-        @DisplayName("회원ID로 정상 생성된다")
+        @DisplayName("유효한 정보로 생성할 수 있다")
         @Test
-        void createsSuccessfully() {
-            // arrange & act
-            OrderModel order = new OrderModel(1L);
-            // assert
-            assertAll(
-                () -> assertThat(order.getMemberId()).isEqualTo(1L),
-                () -> assertThat(order.getStatus()).isEqualTo(OrderStatus.CREATED),
-                () -> assertThat(order.getTotalAmount().value()).isEqualTo(0),
-                () -> assertThat(order.getOrderItems()).isEmpty()
-            );
-        }
-    }
+        void createsWithValidInput() {
+            // given
+            Long userId = 1L;
+            Money totalAmount = new Money(258000);
 
-    @DisplayName("주문 항목 추가 및 총액 계산")
-    @Nested
-    class AddItemAndCalculate {
+            // when
+            OrderModel order = new OrderModel(userId, totalAmount);
 
-        @DisplayName("항목 추가 후 총액을 계산한다")
-        @Test
-        void calculatesTotalAmount() {
-            // arrange
-            OrderModel order = new OrderModel(1L);
-            OrderItemModel item1 = new OrderItemModel(1L, "에어맥스", new Money(129000), 2);
-            OrderItemModel item2 = new OrderItemModel(2L, "에어포스", new Money(109000), 1);
-            // act
-            order.addOrderItem(item1);
-            order.addOrderItem(item2);
-            order.calculateTotalAmount();
-            // assert
+            // then
             assertAll(
-                () -> assertThat(order.getOrderItems()).hasSize(2),
-                () -> assertThat(order.getTotalAmount().value()).isEqualTo(129000 * 2 + 109000)
+                () -> assertThat(order.userId()).isEqualTo(userId),
+                () -> assertThat(order.status()).isEqualTo(OrderStatus.CREATED),
+                () -> assertThat(order.totalAmount()).isEqualTo(totalAmount)
             );
         }
 
-        @DisplayName("항목이 없으면 총액은 0이다")
+        @DisplayName("생성 시 상태는 CREATED이다")
         @Test
-        void zeroTotalWhenNoItems() {
-            // arrange
-            OrderModel order = new OrderModel(1L);
-            // act
-            order.calculateTotalAmount();
-            // assert
-            assertThat(order.getTotalAmount().value()).isEqualTo(0);
+        void defaultStatusIsCreated() {
+            // given & when
+            OrderModel order = new OrderModel(1L, new Money(10000));
+
+            // then
+            assertThat(order.status()).isEqualTo(OrderStatus.CREATED);
+        }
+
+        @DisplayName("userId가 null이면 BAD_REQUEST 예외가 발생한다")
+        @Test
+        void throwsWhenUserIdNull() {
+            // given & when
+            CoreException result = assertThrows(CoreException.class,
+                () -> new OrderModel(null, new Money(10000)));
+
+            // then
+            assertThat(result.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
+        }
+
+        @DisplayName("totalAmount가 null이면 BAD_REQUEST 예외가 발생한다")
+        @Test
+        void throwsWhenTotalAmountNull() {
+            // given & when
+            CoreException result = assertThrows(CoreException.class,
+                () -> new OrderModel(1L, null));
+
+            // then
+            assertThat(result.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
         }
     }
 }

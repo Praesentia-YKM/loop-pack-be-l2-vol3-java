@@ -7,6 +7,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
+import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @RequiredArgsConstructor
@@ -26,12 +28,14 @@ public class OrderRepositoryImpl implements OrderRepository {
     }
 
     @Override
-    public Page<OrderModel> findByMemberId(Long memberId, Pageable pageable) {
-        return orderJpaRepository.findByMemberIdOrderByCreatedAtDesc(memberId, pageable);
+    public List<OrderModel> findAllByUserIdAndCreatedAtBetween(
+        Long userId, ZonedDateTime startAt, ZonedDateTime endAt
+    ) {
+        return orderJpaRepository.findAllByUserIdAndCreatedAtBetween(userId, startAt, endAt);
     }
 
     @Override
     public Page<OrderModel> findAll(Pageable pageable) {
-        return orderJpaRepository.findAllByOrderByCreatedAtDesc(pageable);
+        return orderJpaRepository.findAll(pageable);
     }
 }

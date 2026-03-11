@@ -49,4 +49,9 @@ public class ProductRepositoryImpl implements ProductRepository {
             case LIKES_DESC -> Sort.by(Sort.Direction.DESC, "likeCount");
         };
     }
+
+    @Override
+    public List<ProductModel> findAllByIdInAndDeletedAtIsNull(List<Long> ids) {
+        return productJpaRepository.findAllByIdInAndDeletedAtIsNull(ids);
+    }
 }

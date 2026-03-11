@@ -5,7 +5,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.time.ZonedDateTime;
+import java.util.List;
+
 public interface OrderJpaRepository extends JpaRepository<OrderModel, Long> {
-    Page<OrderModel> findByMemberIdOrderByCreatedAtDesc(Long memberId, Pageable pageable);
-    Page<OrderModel> findAllByOrderByCreatedAtDesc(Pageable pageable);
+
+    List<OrderModel> findAllByUserIdAndCreatedAtBetween(
+        Long userId, ZonedDateTime startAt, ZonedDateTime endAt
+    );
+
+    Page<OrderModel> findAll(Pageable pageable);
 }

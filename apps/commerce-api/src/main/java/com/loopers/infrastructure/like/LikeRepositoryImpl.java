@@ -16,22 +16,22 @@ public class LikeRepositoryImpl implements LikeRepository {
     private final LikeJpaRepository likeJpaRepository;
 
     @Override
-    public Optional<LikeModel> findByMemberIdAndProductId(Long memberId, Long productId) {
-        return likeJpaRepository.findByMemberIdAndProductId(memberId, productId);
-    }
-
-    @Override
-    public Page<LikeModel> findAllByMemberId(Long memberId, Pageable pageable) {
-        return likeJpaRepository.findAllByMemberIdOrderByCreatedAtDesc(memberId, pageable);
-    }
-
-    @Override
     public LikeModel save(LikeModel like) {
         return likeJpaRepository.save(like);
     }
 
     @Override
-    public void delete(LikeModel like) {
-        likeJpaRepository.delete(like);
+    public Optional<LikeModel> findByUserIdAndProductId(Long userId, Long productId) {
+        return likeJpaRepository.findByUserIdAndProductId(userId, productId);
+    }
+
+    @Override
+    public Optional<LikeModel> findByUserIdAndProductIdAndDeletedAtIsNull(Long userId, Long productId) {
+        return likeJpaRepository.findByUserIdAndProductIdAndDeletedAtIsNull(userId, productId);
+    }
+
+    @Override
+    public Page<LikeModel> findActiveLikesWithActiveProduct(Long userId, Pageable pageable) {
+        return likeJpaRepository.findActiveLikesWithActiveProduct(userId, pageable);
     }
 }

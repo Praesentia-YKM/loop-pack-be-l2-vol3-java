@@ -23,9 +23,38 @@ public class BrandService {
     }
 
     @Transactional(readOnly = true)
-    public BrandModel getById(Long id) {
-        return brandRepository.findById(id)
-            .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "브랜드를 찾을 수 없습니다. [id = " + id + "]"));
+    public BrandModel getBrand(Long brandId) {
+        BrandModel brand = findById(brandId);
+        if (brand.getDeletedAt() != null) {
+            throw new CoreException(ErrorType.NOT_FOUND, "브랜드를 찾을 수 없습니다.");
+        }
+        return brand;
+    }
+
+    @Transactional(readOnly = true)
+    public BrandModel getBrandForAdmin(Long brandId) {
+        return findById(brandId);
+    }
+
+    @Transactional
+    public BrandModel update(Long brandId, String name, String description) {
+        BrandModel brand = findById(brandId);
+        BrandName newName = new BrandName(name);
+
+        if (!brand.name().equals(newName)) {
+            brandRepository.findByName(name).ifPresent(existing -> {
+                throw new CoreException(ErrorType.CONFLICT, "이미 존재하는 브랜드 이름입니다.");
+            });
+        }
+
+        brand.update(newName, description);
+        return brand;
+    }
+
+    @Transactional
+    public void delete(Long brandId) {
+        BrandModel brand = findById(brandId);
+        brand.delete();
     }
 
     @Transactional(readOnly = true)

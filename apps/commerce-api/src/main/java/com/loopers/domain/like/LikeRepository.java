@@ -6,8 +6,12 @@ import org.springframework.data.domain.Pageable;
 import java.util.Optional;
 
 public interface LikeRepository {
-    Optional<LikeModel> findByMemberIdAndProductId(Long memberId, Long productId);
-    Page<LikeModel> findAllByMemberId(Long memberId, Pageable pageable);
+
     LikeModel save(LikeModel like);
-    void delete(LikeModel like);
+
+    Optional<LikeModel> findByUserIdAndProductId(Long userId, Long productId);
+
+    Optional<LikeModel> findByUserIdAndProductIdAndDeletedAtIsNull(Long userId, Long productId);
+
+    Page<LikeModel> findActiveLikesWithActiveProduct(Long userId, Pageable pageable);
 }
