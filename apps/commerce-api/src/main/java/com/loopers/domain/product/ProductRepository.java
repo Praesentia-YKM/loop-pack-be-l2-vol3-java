@@ -7,18 +7,8 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ProductRepository {
-
-    ProductModel save(ProductModel product);
-
     Optional<ProductModel> findById(Long id);
-
-    Page<ProductModel> findAllByDeletedAtIsNull(Pageable pageable);
-
-    Page<ProductModel> findAllByBrandIdAndDeletedAtIsNull(Long brandId, Pageable pageable);
-
-    Page<ProductModel> findAll(Pageable pageable);
-
-    Page<ProductModel> findAllByBrandId(Long brandId, Pageable pageable);
-
     List<ProductModel> findAllByBrandId(Long brandId);
+    Page<ProductModel> findAll(Pageable pageable, ProductSortType sortType);
+    ProductModel save(ProductModel product);
 }

@@ -16,34 +16,33 @@ class MoneyTest {
     @Nested
     class Create {
 
-        @DisplayName("음수로 생성하면 BAD_REQUEST 예외를 던진다")
-        @Test
-        void throwsOnNegativeValue() {
-            // given & when
-            CoreException result = assertThrows(CoreException.class, () -> new Money(-1));
-
-            // then
-            assertThat(result.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
-        }
-
-        @DisplayName("0으로 생성할 수 있다")
+        @DisplayName("0원으로 생성할 수 있다")
         @Test
         void createsWithZero() {
-            // given & when
+            // arrange & act
             Money money = new Money(0);
-
-            // then
+            // assert
             assertThat(money.value()).isEqualTo(0);
         }
 
-        @DisplayName("양수로 생성하면 value()로 값을 반환한다")
+        @DisplayName("양수 금액으로 생성할 수 있다")
         @Test
         void createsWithPositiveValue() {
-            // given & when
+            // arrange & act
             Money money = new Money(10000);
-
-            // then
+            // assert
             assertThat(money.value()).isEqualTo(10000);
+        }
+
+        @DisplayName("음수 금액이면 BAD_REQUEST 예외가 발생한다")
+        @Test
+        void throwsOnNegativeValue() {
+            // act
+            CoreException exception = assertThrows(CoreException.class, () -> {
+                new Money(-1);
+            });
+            // assert
+            assertThat(exception.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
         }
     }
 
@@ -51,31 +50,33 @@ class MoneyTest {
     @Nested
     class Operations {
 
-        @DisplayName("add()로 두 Money를 합산할 수 있다")
+        @DisplayName("multiply: 금액에 수량을 곱한 새 Money를 반환한다")
         @Test
-        void addsTwo() {
-            // given
-            Money a = new Money(1000);
-            Money b = new Money(2000);
-
-            // when
-            Money result = a.add(b);
-
-            // then
-            assertThat(result.value()).isEqualTo(3000);
+        void multipliesValue() {
+            // arrange
+            Money money = new Money(1000);
+            // act
+            Money result = money.multiply(3);
+            // assert
+            assertAll(
+                () -> assertThat(result.value()).isEqualTo(3000),
+                () -> assertThat(result).isNotSameAs(money)
+            );
         }
 
-        @DisplayName("multiply()로 Money에 정수를 곱할 수 있다")
+        @DisplayName("add: 두 Money를 더한 새 Money를 반환한다")
         @Test
-        void multipliesByInt() {
-            // given
-            Money money = new Money(1000);
-
-            // when
-            Money result = money.multiply(3);
-
-            // then
-            assertThat(result.value()).isEqualTo(3000);
+        void addsValues() {
+            // arrange
+            Money a = new Money(1000);
+            Money b = new Money(2000);
+            // act
+            Money result = a.add(b);
+            // assert
+            assertAll(
+                () -> assertThat(result.value()).isEqualTo(3000),
+                () -> assertThat(result).isNotSameAs(a)
+            );
         }
     }
 
@@ -83,28 +84,26 @@ class MoneyTest {
     @Nested
     class Equality {
 
-        @DisplayName("같은 값의 Money는 동등하다")
+        @DisplayName("같은 금액의 Money는 동등하다")
         @Test
-        void equalsWithSameValue() {
-            // given
+        void equalForSameValue() {
+            // arrange
             Money a = new Money(1000);
             Money b = new Money(1000);
-
-            // when & then
+            // assert
             assertAll(
                 () -> assertThat(a).isEqualTo(b),
                 () -> assertThat(a.hashCode()).isEqualTo(b.hashCode())
             );
         }
 
-        @DisplayName("다른 값의 Money는 동등하지 않다")
+        @DisplayName("다른 금액의 Money는 동등하지 않다")
         @Test
-        void notEqualsWithDifferentValue() {
-            // given
+        void notEqualForDifferentValue() {
+            // arrange
             Money a = new Money(1000);
             Money b = new Money(2000);
-
-            // when & then
+            // assert
             assertThat(a).isNotEqualTo(b);
         }
     }

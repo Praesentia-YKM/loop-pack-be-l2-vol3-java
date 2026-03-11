@@ -14,12 +14,12 @@ public class StockRepositoryImpl implements StockRepository {
     private final StockJpaRepository stockJpaRepository;
 
     @Override
-    public StockModel save(StockModel stock) {
-        return stockJpaRepository.save(stock);
+    public Optional<StockModel> findByProductId(Long productId) {
+        return stockJpaRepository.findByProductId(productId);
     }
 
     @Override
-    public Optional<StockModel> findByProductId(Long productId) {
-        return stockJpaRepository.findByProductId(productId);
+    public StockModel save(StockModel stock) {
+        return stockJpaRepository.save(stock);
     }
 }
