@@ -18,16 +18,15 @@ public class StockService {
 
     private final StockRepository stockRepository;
 
-    @Transactional
-    public StockModel create(Long productId, int quantity) {
-        StockModel stock = new StockModel(productId, quantity);
-        return stockRepository.save(stock);
-    }
-
     @Transactional(readOnly = true)
     public StockModel getByProductId(Long productId) {
         return stockRepository.findByProductId(productId)
-            .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "재고를 찾을 수 없습니다."));
+            .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "재고를 찾을 수 없습니다. [productId = " + productId + "]"));
+    }
+
+    @Transactional
+    public StockModel save(Long productId, int quantity) {
+        return stockRepository.save(new StockModel(productId, quantity));
     }
 
     public StockModel getByProductIdForUpdate(Long productId) {

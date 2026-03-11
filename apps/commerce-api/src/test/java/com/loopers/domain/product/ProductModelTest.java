@@ -1,11 +1,14 @@
 package com.loopers.domain.product;
 
+import com.loopers.support.error.CoreException;
+import com.loopers.support.error.ErrorType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class ProductModelTest {
 
@@ -13,39 +16,57 @@ class ProductModelTest {
     @Nested
     class Create {
 
-        @DisplayName("유효한 정보로 생성할 수 있다")
+        @DisplayName("이름, 설명, 가격, 브랜드ID가 주어지면 정상 생성된다")
         @Test
-        void createsWithValidInput() {
-            // given
-            String name = "에어맥스 90";
-            String description = "나이키 클래식 러닝화";
+        void createsSuccessfully() {
+            // arrange
+            String name = "에어맥스";
+            String description = "러닝화";
             Money price = new Money(129000);
             Long brandId = 1L;
-
-            // when
+            // act
             ProductModel product = new ProductModel(name, description, price, brandId);
-
-            // then
+            // assert
             assertAll(
-                () -> assertThat(product.name()).isEqualTo(name),
-                () -> assertThat(product.description()).isEqualTo(description),
-                () -> assertThat(product.price()).isEqualTo(price),
-                () -> assertThat(product.brandId()).isEqualTo(brandId),
-                () -> assertThat(product.likeCount()).isEqualTo(0)
+                () -> assertThat(product.getName()).isEqualTo(name),
+                () -> assertThat(product.getDescription()).isEqualTo(description),
+                () -> assertThat(product.getPrice().value()).isEqualTo(129000),
+                () -> assertThat(product.getBrandId()).isEqualTo(brandId),
+                () -> assertThat(product.getLikeCount()).isEqualTo(0)
             );
         }
 
-        @DisplayName("description이 null이어도 생성할 수 있다")
+        @DisplayName("이름이 null이면 BAD_REQUEST 예외가 발생한다")
         @Test
-        void createsWithNullDescription() {
-            // given & when
-            ProductModel product = new ProductModel("에어맥스 90", null, new Money(129000), 1L);
+        void throwsOnNullName() {
+            // act
+            CoreException exception = assertThrows(CoreException.class, () -> {
+                new ProductModel(null, "설명", new Money(10000), 1L);
+            });
+            // assert
+            assertThat(exception.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
+        }
 
-            // then
-            assertAll(
-                () -> assertThat(product.name()).isEqualTo("에어맥스 90"),
-                () -> assertThat(product.description()).isNull()
-            );
+        @DisplayName("이름이 공백이면 BAD_REQUEST 예외가 발생한다")
+        @Test
+        void throwsOnBlankName() {
+            // act
+            CoreException exception = assertThrows(CoreException.class, () -> {
+                new ProductModel("  ", "설명", new Money(10000), 1L);
+            });
+            // assert
+            assertThat(exception.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
+        }
+
+        @DisplayName("가격이 null이면 BAD_REQUEST 예외가 발생한다")
+        @Test
+        void throwsOnNullPrice() {
+            // act
+            CoreException exception = assertThrows(CoreException.class, () -> {
+                new ProductModel("상품", "설명", null, 1L);
+            });
+            // assert
+            assertThat(exception.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
         }
     }
 
@@ -53,24 +74,45 @@ class ProductModelTest {
     @Nested
     class Update {
 
-        @DisplayName("name, description, price를 변경할 수 있다")
+        @DisplayName("이름, 설명, 가격을 수정할 수 있다")
         @Test
-        void updatesNameDescriptionPrice() {
-            // given
-            ProductModel product = new ProductModel("에어맥스 90", "러닝화", new Money(129000), 1L);
-            String newName = "에어맥스 95";
-            String newDescription = "뉴 러닝화";
-            Money newPrice = new Money(159000);
-
-            // when
-            product.update(newName, newDescription, newPrice);
-
-            // then
+        void updatesSuccessfully() {
+            // arrange
+            ProductModel product = new ProductModel("에어맥스", "러닝화", new Money(129000), 1L);
+            // act
+            product.update("에어포스", "캐주얼", new Money(109000));
+            // assert
             assertAll(
-                () -> assertThat(product.name()).isEqualTo(newName),
-                () -> assertThat(product.description()).isEqualTo(newDescription),
-                () -> assertThat(product.price()).isEqualTo(newPrice)
+                () -> assertThat(product.getName()).isEqualTo("에어포스"),
+                () -> assertThat(product.getDescription()).isEqualTo("캐주얼"),
+                () -> assertThat(product.getPrice().value()).isEqualTo(109000)
             );
+        }
+
+        @DisplayName("수정 시 이름이 공백이면 BAD_REQUEST 예외가 발생한다")
+        @Test
+        void throwsOnBlankNameUpdate() {
+            // arrange
+            ProductModel product = new ProductModel("에어맥스", "러닝화", new Money(129000), 1L);
+            // act
+            CoreException exception = assertThrows(CoreException.class, () -> {
+                product.update("  ", "설명", new Money(10000));
+            });
+            // assert
+            assertThat(exception.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
+        }
+
+        @DisplayName("수정 시 가격이 null이면 BAD_REQUEST 예외가 발생한다")
+        @Test
+        void throwsOnNullPriceUpdate() {
+            // arrange
+            ProductModel product = new ProductModel("에어맥스", "러닝화", new Money(129000), 1L);
+            // act
+            CoreException exception = assertThrows(CoreException.class, () -> {
+                product.update("에어포스", "설명", null);
+            });
+            // assert
+            assertThat(exception.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
         }
     }
 
@@ -78,14 +120,39 @@ class ProductModelTest {
     @Nested
     class LikeCount {
 
-        @DisplayName("생성 시 likeCount는 0이다")
+        @DisplayName("좋아요 수를 증가시킨다")
         @Test
-        void defaultsToZero() {
-            // given & when
-            ProductModel product = new ProductModel("에어맥스 90", "러닝화", new Money(129000), 1L);
+        void increasesLikeCount() {
+            // arrange
+            ProductModel product = new ProductModel("에어맥스", "러닝화", new Money(129000), 1L);
+            // act
+            product.increaseLikeCount();
+            // assert
+            assertThat(product.getLikeCount()).isEqualTo(1);
+        }
 
-            // then
-            assertThat(product.likeCount()).isEqualTo(0);
+        @DisplayName("좋아요 수를 감소시킨다")
+        @Test
+        void decreasesLikeCount() {
+            // arrange
+            ProductModel product = new ProductModel("에어맥스", "러닝화", new Money(129000), 1L);
+            product.increaseLikeCount();
+            product.increaseLikeCount();
+            // act
+            product.decreaseLikeCount();
+            // assert
+            assertThat(product.getLikeCount()).isEqualTo(1);
+        }
+
+        @DisplayName("좋아요 수가 0 미만으로 감소하지 않는다")
+        @Test
+        void doesNotDecreaseBelowZero() {
+            // arrange
+            ProductModel product = new ProductModel("에어맥스", "러닝화", new Money(129000), 1L);
+            // act
+            product.decreaseLikeCount();
+            // assert
+            assertThat(product.getLikeCount()).isEqualTo(0);
         }
     }
 }

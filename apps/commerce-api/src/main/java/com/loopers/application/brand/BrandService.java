@@ -19,14 +19,10 @@ public class BrandService {
 
     @Transactional
     public BrandModel register(String name, String description) {
-        BrandName brandName = new BrandName(name);
-
         brandRepository.findByName(name).ifPresent(existing -> {
-            throw new CoreException(ErrorType.CONFLICT, "이미 존재하는 브랜드 이름입니다.");
+            throw new CoreException(ErrorType.CONFLICT, "이미 존재하는 브랜드 이름입니다: " + name);
         });
-
-        BrandModel brand = new BrandModel(brandName, description);
-        return brandRepository.save(brand);
+        return brandRepository.save(new BrandModel(name, description));
     }
 
     @Transactional(readOnly = true)
@@ -69,8 +65,21 @@ public class BrandService {
         return brandRepository.findAll(pageable);
     }
 
-    private BrandModel findById(Long brandId) {
-        return brandRepository.findById(brandId)
-            .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "브랜드를 찾을 수 없습니다."));
+    @Transactional
+    public BrandModel update(Long id, String name, String description) {
+        BrandModel brand = getById(id);
+        brandRepository.findByName(name)
+            .filter(existing -> !existing.getId().equals(brand.getId()))
+            .ifPresent(existing -> {
+                throw new CoreException(ErrorType.CONFLICT, "이미 존재하는 브랜드 이름입니다: " + name);
+            });
+        brand.update(name, description);
+        return brand;
+    }
+
+    @Transactional
+    public void delete(Long id) {
+        BrandModel brand = getById(id);
+        brand.delete();
     }
 }

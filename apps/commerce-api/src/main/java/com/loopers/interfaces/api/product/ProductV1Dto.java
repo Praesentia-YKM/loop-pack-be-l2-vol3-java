@@ -5,15 +5,8 @@ import com.loopers.domain.stock.StockStatus;
 
 public class ProductV1Dto {
 
-    public record ProductResponse(
-        Long id,
-        String name,
-        String description,
-        int price,
-        Long brandId,
-        String brandName,
-        int likeCount,
-        StockStatus stockStatus
+    public record ProductSummaryResponse(
+        Long id, String name, int price, String brandName, String stockStatus
     ) {
         public static ProductResponse from(ProductDetail detail) {
             return new ProductResponse(

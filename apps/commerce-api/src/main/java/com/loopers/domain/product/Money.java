@@ -2,7 +2,6 @@ package com.loopers.domain.product;
 
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
-import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -20,7 +19,7 @@ public class Money {
 
     public Money(int value) {
         if (value < 0) {
-            throw new CoreException(ErrorType.BAD_REQUEST, "가격은 음수일 수 없습니다.");
+            throw new CoreException(ErrorType.BAD_REQUEST, "가격은 0 이상이어야 합니다.");
         }
         this.value = value;
     }
@@ -29,12 +28,12 @@ public class Money {
         return value;
     }
 
-    public Money add(Money other) {
-        return new Money(this.value + other.value);
+    public Money multiply(int quantity) {
+        return new Money(this.value * quantity);
     }
 
-    public Money multiply(int multiplier) {
-        return new Money(this.value * multiplier);
+    public Money add(Money other) {
+        return new Money(this.value + other.value);
     }
 
     public Money divide(int divisor) {
@@ -55,8 +54,8 @@ public class Money {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof Money that)) return false;
-        return value == that.value;
+        if (!(o instanceof Money money)) return false;
+        return value == money.value;
     }
 
     @Override

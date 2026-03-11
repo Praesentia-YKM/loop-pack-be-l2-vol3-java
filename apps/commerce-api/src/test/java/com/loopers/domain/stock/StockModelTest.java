@@ -16,66 +16,105 @@ class StockModelTest {
     @Nested
     class Create {
 
-        @DisplayName("유효한 정보로 생성할 수 있다")
+        @DisplayName("상품ID와 수량으로 정상 생성된다")
         @Test
-        void createsWithValidInput() {
-            // given & when
+        void createsSuccessfully() {
+            // arrange & act
             StockModel stock = new StockModel(1L, 100);
-
-            // then
+            // assert
             assertAll(
-                () -> assertThat(stock.productId()).isEqualTo(1L),
-                () -> assertThat(stock.quantity()).isEqualTo(100)
+                () -> assertThat(stock.getProductId()).isEqualTo(1L),
+                () -> assertThat(stock.getQuantity()).isEqualTo(100)
             );
+        }
+
+        @DisplayName("수량이 0이면 정상 생성된다")
+        @Test
+        void createsWithZeroQuantity() {
+            // arrange & act
+            StockModel stock = new StockModel(1L, 0);
+            // assert
+            assertThat(stock.getQuantity()).isEqualTo(0);
+        }
+
+        @DisplayName("수량이 음수면 BAD_REQUEST 예외가 발생한다")
+        @Test
+        void throwsOnNegativeQuantity() {
+            // act
+            CoreException exception = assertThrows(CoreException.class, () -> {
+                new StockModel(1L, -1);
+            });
+            // assert
+            assertThat(exception.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
         }
     }
 
-    @DisplayName("재고 감소")
+    @DisplayName("재고 차감")
     @Nested
     class Decrease {
 
-        @DisplayName("충분한 수량이면 감소시킨다")
+        @DisplayName("충분한 재고가 있으면 차감된다")
         @Test
-        void decreasesQuantity() {
-            // given
+        void decreasesSuccessfully() {
+            // arrange
             StockModel stock = new StockModel(1L, 100);
-
-            // when
+            // act
             stock.decrease(30);
-
-            // then
-            assertThat(stock.quantity()).isEqualTo(70);
+            // assert
+            assertThat(stock.getQuantity()).isEqualTo(70);
         }
 
-        @DisplayName("수량을 초과하면 BAD_REQUEST 예외를 던진다")
+        @DisplayName("재고가 부족하면 BAD_REQUEST 예외가 발생한다")
         @Test
-        void throwsWhenExceedsQuantity() {
-            // given
+        void throwsOnInsufficientStock() {
+            // arrange
             StockModel stock = new StockModel(1L, 10);
+            // act
+            CoreException exception = assertThrows(CoreException.class, () -> {
+                stock.decrease(11);
+            });
+            // assert
+            assertThat(exception.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
+        }
 
-            // when
-            CoreException result = assertThrows(CoreException.class, () -> stock.decrease(11));
-
-            // then
-            assertThat(result.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
+        @DisplayName("재고를 정확히 0까지 차감할 수 있다")
+        @Test
+        void decreasesToZero() {
+            // arrange
+            StockModel stock = new StockModel(1L, 10);
+            // act
+            stock.decrease(10);
+            // assert
+            assertThat(stock.getQuantity()).isEqualTo(0);
         }
     }
 
-    @DisplayName("재고 증가")
+    @DisplayName("재고 수정")
     @Nested
-    class Increase {
+    class Update {
 
-        @DisplayName("수량을 증가시킨다")
+        @DisplayName("수량을 수정할 수 있다")
         @Test
-        void increasesQuantity() {
-            // given
+        void updatesQuantity() {
+            // arrange
             StockModel stock = new StockModel(1L, 100);
+            // act
+            stock.update(50);
+            // assert
+            assertThat(stock.getQuantity()).isEqualTo(50);
+        }
 
-            // when
-            stock.increase(50);
-
-            // then
-            assertThat(stock.quantity()).isEqualTo(150);
+        @DisplayName("음수로 수정하면 BAD_REQUEST 예외가 발생한다")
+        @Test
+        void throwsOnNegativeQuantityUpdate() {
+            // arrange
+            StockModel stock = new StockModel(1L, 100);
+            // act
+            CoreException exception = assertThrows(CoreException.class, () -> {
+                stock.update(-1);
+            });
+            // assert
+            assertThat(exception.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
         }
     }
 
@@ -83,59 +122,22 @@ class StockModelTest {
     @Nested
     class HasEnough {
 
-        @DisplayName("수량이 충분하면 true를 반환한다")
+        @DisplayName("재고가 충분하면 true를 반환한다")
         @Test
         void returnsTrueWhenEnough() {
-            // given
+            // arrange
             StockModel stock = new StockModel(1L, 10);
-
-            // when & then
+            // act & assert
             assertThat(stock.hasEnough(10)).isTrue();
         }
 
-        @DisplayName("수량이 부족하면 false를 반환한다")
+        @DisplayName("재고가 부족하면 false를 반환한다")
         @Test
         void returnsFalseWhenNotEnough() {
-            // given
+            // arrange
             StockModel stock = new StockModel(1L, 10);
-
-            // when & then
+            // act & assert
             assertThat(stock.hasEnough(11)).isFalse();
-        }
-    }
-
-    @DisplayName("재고 상태 변환")
-    @Nested
-    class ToStatus {
-
-        @DisplayName("수량이 11 이상이면 IN_STOCK을 반환한다")
-        @Test
-        void returnsInStock() {
-            // given
-            StockModel stock = new StockModel(1L, 11);
-
-            // when & then
-            assertThat(stock.toStatus()).isEqualTo(StockStatus.IN_STOCK);
-        }
-
-        @DisplayName("수량이 1~10이면 LOW_STOCK을 반환한다")
-        @Test
-        void returnsLowStock() {
-            // given
-            StockModel stock = new StockModel(1L, 5);
-
-            // when & then
-            assertThat(stock.toStatus()).isEqualTo(StockStatus.LOW_STOCK);
-        }
-
-        @DisplayName("수량이 0이면 OUT_OF_STOCK을 반환한다")
-        @Test
-        void returnsOutOfStock() {
-            // given
-            StockModel stock = new StockModel(1L, 0);
-
-            // when & then
-            assertThat(stock.toStatus()).isEqualTo(StockStatus.OUT_OF_STOCK);
         }
     }
 }

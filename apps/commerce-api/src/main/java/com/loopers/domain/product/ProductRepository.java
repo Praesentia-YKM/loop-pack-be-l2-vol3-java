@@ -15,15 +15,6 @@ public interface ProductRepository {
     int decrementLikeCount(Long productId);
 
     Optional<ProductModel> findById(Long id);
-
-    Page<ProductModel> findAllByDeletedAtIsNull(Pageable pageable);
-
-    Page<ProductModel> findAllByBrandIdAndDeletedAtIsNull(Long brandId, Pageable pageable);
-
-    Page<ProductModel> findAll(Pageable pageable);
-
-    Page<ProductModel> findAllByBrandId(Long brandId, Pageable pageable);
-
     List<ProductModel> findAllByBrandId(Long brandId);
 
     List<ProductModel> findAllByIdInAndDeletedAtIsNull(List<Long> ids);
