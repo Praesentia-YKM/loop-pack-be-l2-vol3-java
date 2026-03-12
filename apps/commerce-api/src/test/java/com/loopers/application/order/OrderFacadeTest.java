@@ -59,8 +59,8 @@ class OrderFacadeTest {
             StockModel stock1 = new StockModel(1L, 100);
             StockModel stock2 = new StockModel(2L, 50);
 
-            given(productService.getById(1L)).willReturn(product1);
-            given(productService.getById(2L)).willReturn(product2);
+            given(productService.getProduct(1L)).willReturn(product1);
+            given(productService.getProduct(2L)).willReturn(product2);
             given(stockService.getByProductId(1L)).willReturn(stock1);
             given(stockService.getByProductId(2L)).willReturn(stock2);
             given(orderService.save(any(OrderModel.class))).willAnswer(invocation -> invocation.getArgument(0));
@@ -86,7 +86,7 @@ class OrderFacadeTest {
             ProductModel product = new ProductModel("에어맥스", "러닝화", new Money(129000), 1L);
             ReflectionTestUtils.setField(product, "id", 1L);
             product.delete();
-            given(productService.getById(1L)).willReturn(product);
+            given(productService.getProduct(1L)).willReturn(product);
 
             List<OrderItemCommand> commands = List.of(new OrderItemCommand(1L, 1));
             // act
@@ -107,7 +107,7 @@ class OrderFacadeTest {
             ReflectionTestUtils.setField(product, "id", 1L);
             StockModel stock = new StockModel(1L, 5);
 
-            given(productService.getById(1L)).willReturn(product);
+            given(productService.getProduct(1L)).willReturn(product);
             given(stockService.getByProductId(1L)).willReturn(stock);
 
             List<OrderItemCommand> commands = List.of(new OrderItemCommand(1L, 10));

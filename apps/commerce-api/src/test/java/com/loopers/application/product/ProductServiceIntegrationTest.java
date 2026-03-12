@@ -240,7 +240,7 @@ class ProductServiceIntegrationTest {
             createProduct("에어맥스 95", "러닝화", new Money(159000), brandId, 50);
 
             // when
-            productService.deleteAllByBrandId(brandId);
+            productService.softDeleteByBrandId(brandId);
 
             // then
             Page<ProductModel> result = productService.getProducts(brandId, ProductSortType.LATEST, PageRequest.of(0, 10));

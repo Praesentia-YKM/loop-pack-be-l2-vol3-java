@@ -30,7 +30,7 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
-    public ProductModel getById(Long id) {
+    public ProductModel getProduct(Long id) {
         ProductModel product = productRepository.findById(id)
             .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "상품을 찾을 수 없습니다. [id = " + id + "]"));
         if (product.getDeletedAt() != null) {
@@ -40,20 +40,26 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
+    public ProductModel getProductForAdmin(Long id) {
+        return productRepository.findById(id)
+            .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "상품을 찾을 수 없습니다. [id = " + id + "]"));
+    }
+
+    @Transactional(readOnly = true)
     public Page<ProductModel> getAll(Pageable pageable, ProductSortType sortType) {
         return productRepository.findAll(pageable, sortType);
     }
 
     @Transactional
     public ProductModel update(Long id, String name, String description, Money price) {
-        ProductModel product = getById(id);
+        ProductModel product = findById(id);
         product.update(name, description, price);
         return product;
     }
 
     @Transactional
     public void delete(Long id) {
-        ProductModel product = getById(id);
+        ProductModel product = findById(id);
         product.delete();
     }
 

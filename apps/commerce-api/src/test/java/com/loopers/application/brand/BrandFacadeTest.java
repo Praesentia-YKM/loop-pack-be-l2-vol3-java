@@ -43,7 +43,7 @@ class BrandFacadeTest {
 
             // then
             verify(brandService).delete(brandId);
-            verify(productService).deleteAllByBrandId(brandId);
+            verify(productService).softDeleteByBrandId(brandId);
         }
     }
 }

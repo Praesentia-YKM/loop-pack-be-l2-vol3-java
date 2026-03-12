@@ -43,12 +43,12 @@ class LikeFacadeTest {
             Long memberId = 1L;
             Long productId = 100L;
             ProductModel product = new ProductModel("에어맥스", "러닝화", new Money(129000), 1L);
-            given(productService.getById(productId)).willReturn(product);
+            given(productService.getProduct(productId)).willReturn(product);
             given(likeService.register(memberId, productId)).willReturn(true);
             // act
             likeFacade.register(memberId, productId);
             // assert
-            then(productService).should().increaseLikeCount(productId);
+            then(productService).should().incrementLikeCount(productId);
         }
 
         @DisplayName("이미 존재하면 좋아요 수를 증가시키지 않는다")
@@ -58,12 +58,12 @@ class LikeFacadeTest {
             Long memberId = 1L;
             Long productId = 100L;
             ProductModel product = new ProductModel("에어맥스", "러닝화", new Money(129000), 1L);
-            given(productService.getById(productId)).willReturn(product);
+            given(productService.getProduct(productId)).willReturn(product);
             given(likeService.register(memberId, productId)).willReturn(false);
             // act
             likeFacade.register(memberId, productId);
             // assert
-            then(productService).should(never()).increaseLikeCount(productId);
+            then(productService).should(never()).incrementLikeCount(productId);
         }
     }
 
@@ -78,12 +78,12 @@ class LikeFacadeTest {
             Long memberId = 1L;
             Long productId = 100L;
             ProductModel product = new ProductModel("에어맥스", "러닝화", new Money(129000), 1L);
-            given(productService.getById(productId)).willReturn(product);
+            given(productService.getProduct(productId)).willReturn(product);
             given(likeService.cancel(memberId, productId)).willReturn(true);
             // act
             likeFacade.cancel(memberId, productId);
             // assert
-            then(productService).should().decreaseLikeCount(productId);
+            then(productService).should().decrementLikeCount(productId);
         }
 
         @DisplayName("좋아요가 없었으면 좋아요 수를 감소시키지 않는다")
@@ -93,12 +93,12 @@ class LikeFacadeTest {
             Long memberId = 1L;
             Long productId = 100L;
             ProductModel product = new ProductModel("에어맥스", "러닝화", new Money(129000), 1L);
-            given(productService.getById(productId)).willReturn(product);
+            given(productService.getProduct(productId)).willReturn(product);
             given(likeService.cancel(memberId, productId)).willReturn(false);
             // act
             likeFacade.cancel(memberId, productId);
             // assert
-            then(productService).should(never()).decreaseLikeCount(productId);
+            then(productService).should(never()).decrementLikeCount(productId);
         }
     }
 }

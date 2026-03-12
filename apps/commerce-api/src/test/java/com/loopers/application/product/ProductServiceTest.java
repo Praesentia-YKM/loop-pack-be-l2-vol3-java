@@ -79,7 +79,7 @@ class ProductServiceTest {
             ProductModel product = new ProductModel("에어맥스", "러닝화", new Money(129000), 1L);
             given(productRepository.findById(id)).willReturn(Optional.of(product));
             // act
-            ProductModel result = productService.getById(id);
+            ProductModel result = productService.getProduct(id);
             // assert
             assertThat(result.getName()).isEqualTo("에어맥스");
         }
@@ -92,7 +92,7 @@ class ProductServiceTest {
             given(productRepository.findById(id)).willReturn(Optional.empty());
             // act
             CoreException exception = assertThrows(CoreException.class, () -> {
-                productService.getById(id);
+                productService.getProduct(id);
             });
             // assert
             assertThat(exception.getErrorType()).isEqualTo(ErrorType.NOT_FOUND);
@@ -108,7 +108,7 @@ class ProductServiceTest {
             given(productRepository.findById(id)).willReturn(Optional.of(product));
             // act
             CoreException exception = assertThrows(CoreException.class, () -> {
-                productService.getById(id);
+                productService.getProduct(id);
             });
             // assert
             assertThat(exception.getErrorType()).isEqualTo(ErrorType.NOT_FOUND);
@@ -237,7 +237,7 @@ class ProductServiceTest {
             ProductModel product = new ProductModel("에어맥스", "러닝화", new Money(129000), 1L);
             given(productRepository.findById(id)).willReturn(Optional.of(product));
             // act
-            productService.increaseLikeCount(id);
+            productService.incrementLikeCount(id);
             // assert
             assertThat(product.getLikeCount()).isEqualTo(1);
         }
@@ -251,7 +251,7 @@ class ProductServiceTest {
             product.increaseLikeCount();
             given(productRepository.findById(id)).willReturn(Optional.of(product));
             // act
-            productService.decreaseLikeCount(id);
+            productService.decrementLikeCount(id);
             // assert
             assertThat(product.getLikeCount()).isEqualTo(0);
         }

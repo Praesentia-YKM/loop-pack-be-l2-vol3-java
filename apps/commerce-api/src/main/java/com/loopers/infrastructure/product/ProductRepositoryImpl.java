@@ -51,14 +51,9 @@ public class ProductRepositoryImpl implements ProductRepository {
         return productJpaRepository.findAllByDeletedAtIsNull(sortedPageable);
     }
 
-    @Override
-    public ProductModel save(ProductModel product) {
-        return productJpaRepository.save(product);
-    }
-
     private Sort toSort(ProductSortType sortType) {
         return switch (sortType) {
-            case CREATED_DESC -> Sort.by(Sort.Direction.DESC, "createdAt");
+            case LATEST, CREATED_DESC -> Sort.by(Sort.Direction.DESC, "createdAt");
             case PRICE_ASC -> Sort.by(Sort.Direction.ASC, "price.value");
             case PRICE_DESC -> Sort.by(Sort.Direction.DESC, "price.value");
             case LIKES_DESC -> Sort.by(Sort.Direction.DESC, "likeCount");
