@@ -6,12 +6,16 @@ import com.loopers.domain.product.Money;
 import com.loopers.domain.product.ProductModel;
 import com.loopers.domain.product.ProductSortType;
 import com.loopers.domain.stock.StockModel;
+import com.loopers.domain.stock.StockStatus;
 import com.loopers.application.stock.StockService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Map;
 
 @RequiredArgsConstructor
 @Component
@@ -48,20 +52,42 @@ public class ProductFacade {
     @Transactional(readOnly = true)
     public Page<ProductDetail> getProducts(Long brandId, ProductSortType sortType, Pageable pageable) {
         Page<ProductModel> products = productService.getProducts(brandId, sortType, pageable);
+
+        List<Long> brandIds = products.getContent().stream()
+            .map(ProductModel::getBrandId).distinct().toList();
+        List<Long> productIds = products.getContent().stream()
+            .map(ProductModel::getId).toList();
+
+        Map<Long, BrandModel> brandMap = brandService.getByIds(brandIds);
+        Map<Long, StockModel> stockMap = stockService.getByProductIds(productIds);
+
         return products.map(product -> {
-            String brandName = getBrandName(product.brandId());
-            StockModel stock = stockService.getByProductId(product.getId());
-            return ProductDetail.ofCustomer(product, brandName, stock.toStatus());
+            BrandModel brand = brandMap.get(product.getBrandId());
+            String brandName = brand != null ? brand.getName() : null;
+            StockModel stock = stockMap.get(product.getId());
+            StockStatus status = stock != null ? StockStatus.from(stock.getQuantity()) : StockStatus.OUT_OF_STOCK;
+            return ProductDetail.ofCustomer(product, brandName, status);
         });
     }
 
     @Transactional(readOnly = true)
     public Page<ProductDetail> getProductsForAdmin(Long brandId, Pageable pageable) {
         Page<ProductModel> products = productService.getProductsForAdmin(brandId, pageable);
+
+        List<Long> brandIds = products.getContent().stream()
+            .map(ProductModel::getBrandId).distinct().toList();
+        List<Long> productIds = products.getContent().stream()
+            .map(ProductModel::getId).toList();
+
+        Map<Long, BrandModel> brandMap = brandService.getByIds(brandIds);
+        Map<Long, StockModel> stockMap = stockService.getByProductIds(productIds);
+
         return products.map(product -> {
-            String brandName = getBrandName(product.brandId());
-            StockModel stock = stockService.getByProductId(product.getId());
-            return ProductDetail.ofAdmin(product, brandName, stock.quantity());
+            BrandModel brand = brandMap.get(product.getBrandId());
+            String brandName = brand != null ? brand.getName() : null;
+            StockModel stock = stockMap.get(product.getId());
+            int stockQuantity = stock != null ? stock.getQuantity() : 0;
+            return ProductDetail.ofAdmin(product, brandName, stockQuantity);
         });
     }
 
