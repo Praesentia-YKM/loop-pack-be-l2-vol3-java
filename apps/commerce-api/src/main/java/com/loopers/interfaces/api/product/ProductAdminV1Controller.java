@@ -48,7 +48,7 @@ public class ProductAdminV1Controller implements ProductAdminV1ApiSpec {
         @RequestParam(value = "sortType", defaultValue = "CREATED_DESC") String sortType
     ) {
         ProductSortType sort = ProductSortType.valueOf(sortType);
-        Page<ProductAdminV1Dto.ProductAdminSummaryResponse> response = productFacade.getProductsForAdmin(pageable, sort)
+        Page<ProductAdminV1Dto.ProductAdminSummaryResponse> response = productFacade.getProductsForAdmin(null, pageable)
             .map(ProductAdminV1Dto.ProductAdminSummaryResponse::from);
         return ApiResponse.success(response);
     }

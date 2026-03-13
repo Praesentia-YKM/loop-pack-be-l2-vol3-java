@@ -144,7 +144,7 @@ class ProductServiceIntegrationTest {
             productService.delete(deleted.id());
 
             // when
-            Page<ProductModel> result = productService.getAll(PageRequest.of(0, 10), ProductSortType.CREATED_DESC);
+            Page<ProductModel> result = productService.getProducts(null, ProductSortType.CREATED_DESC, PageRequest.of(0, 10));
 
             // then
             assertThat(result.getTotalElements()).isGreaterThanOrEqualTo(2);

@@ -10,6 +10,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 @RequiredArgsConstructor
 @Component
 public class BrandService {
@@ -61,6 +66,13 @@ public class BrandService {
     @Transactional(readOnly = true)
     public Page<BrandModel> getAll(Pageable pageable) {
         return brandRepository.findAll(pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Map<Long, BrandModel> getByIds(List<Long> ids) {
+        return brandRepository.findAllByIdIn(ids)
+            .stream()
+            .collect(Collectors.toMap(BrandModel::getId, Function.identity()));
     }
 
     private BrandModel findById(Long brandId) {
