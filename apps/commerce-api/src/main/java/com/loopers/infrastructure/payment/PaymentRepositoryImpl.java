@@ -2,6 +2,7 @@ package com.loopers.infrastructure.payment;
 
 import com.loopers.domain.payment.PaymentModel;
 import com.loopers.domain.payment.PaymentRepository;
+import com.loopers.domain.payment.PaymentStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -32,5 +33,10 @@ public class PaymentRepositoryImpl implements PaymentRepository {
     @Override
     public List<PaymentModel> findAllByOrderId(Long orderId) {
         return paymentJpaRepository.findAllByOrderId(orderId);
+    }
+
+    @Override
+    public List<PaymentModel> findAllByStatus(PaymentStatus status) {
+        return paymentJpaRepository.findAllByStatus(status);
     }
 }

@@ -8,4 +8,5 @@ public interface PaymentRepository {
     Optional<PaymentModel> findById(Long id);
     Optional<PaymentModel> findByTransactionKey(String transactionKey);
     List<PaymentModel> findAllByOrderId(Long orderId);
+    List<PaymentModel> findAllByStatus(PaymentStatus status);
 }

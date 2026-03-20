@@ -30,4 +30,26 @@ public record PaymentInfo(
             payment.getCreatedAt()
         );
     }
+
+    public static PaymentInfo from(PaymentModel payment, String transactionKey) {
+        return new PaymentInfo(
+            payment.getId(),
+            payment.orderId(),
+            payment.userId(),
+            payment.cardType().name(),
+            payment.maskedCardNo(),
+            payment.amount().value(),
+            payment.status().name(),
+            transactionKey,
+            payment.failureReason(),
+            payment.getCreatedAt()
+        );
+    }
+
+    public static PaymentInfo pgFailed(Long orderId, String reason) {
+        return new PaymentInfo(
+            null, orderId, null, null, null, 0,
+            "PG_FAILED", null, reason, null
+        );
+    }
 }

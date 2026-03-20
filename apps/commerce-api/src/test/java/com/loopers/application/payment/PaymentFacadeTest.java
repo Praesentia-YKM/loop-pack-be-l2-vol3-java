@@ -5,8 +5,9 @@ import com.loopers.config.PgProperties;
 import com.loopers.domain.order.OrderModel;
 import com.loopers.domain.payment.CardType;
 import com.loopers.domain.payment.PaymentModel;
+import com.loopers.domain.payment.PaymentStatus;
 import com.loopers.domain.product.Money;
-import com.loopers.infrastructure.payment.PgClient;
+import com.loopers.infrastructure.payment.PgPaymentGateway;
 import com.loopers.infrastructure.payment.dto.PgPaymentResponse;
 import com.loopers.support.error.CoreException;
 import org.junit.jupiter.api.DisplayName;
@@ -30,7 +31,7 @@ class PaymentFacadeTest {
     @InjectMocks private PaymentFacade paymentFacade;
     @Mock private PaymentService paymentService;
     @Mock private OrderService orderService;
-    @Mock private PgClient pgClient;
+    @Mock private PgPaymentGateway pgPaymentGateway;
     @Mock private PgProperties pgProperties;
 
     @DisplayName("결제 요청")
@@ -44,16 +45,22 @@ class PaymentFacadeTest {
             Long userId = 1L;
             PaymentCommand command = new PaymentCommand(1L, CardType.SAMSUNG, "1234-5678-9814-1451");
 
-            OrderModel mockOrder = mock(OrderModel.class);
-            given(mockOrder.getId()).willReturn(1L);
-            given(mockOrder.finalAmount()).willReturn(new Money(50000));
-            given(orderService.getOrder(1L, userId)).willReturn(mockOrder);
+            PaymentModel mockPayment = mock(PaymentModel.class);
+            given(mockPayment.getId()).willReturn(1L);
+            given(mockPayment.orderId()).willReturn(1L);
+            given(mockPayment.userId()).willReturn(userId);
+            given(mockPayment.cardType()).willReturn(CardType.SAMSUNG);
+            given(mockPayment.maskedCardNo()).willReturn("1234-****-****-1451");
+            given(mockPayment.amount()).willReturn(new Money(50000));
+            given(mockPayment.status()).willReturn(PaymentStatus.PENDING);
 
+            // TX-1: preparePayment
+            given(paymentService.preparePayment(userId, command)).willReturn(mockPayment);
+
+            // PG 호출
             given(pgProperties.callbackUrl()).willReturn("http://localhost:8080/api/v1/payments/callback");
-            given(pgClient.requestPayment(any(), eq(String.valueOf(userId))))
+            given(pgPaymentGateway.requestPayment(any(), eq(String.valueOf(userId))))
                 .willReturn(new PgPaymentResponse("20250816:TR:abc123", "1", "PENDING", null));
-
-            given(paymentService.save(any(PaymentModel.class))).willAnswer(invocation -> invocation.getArgument(0));
 
             // when
             PaymentInfo result = paymentFacade.requestPayment(userId, command);
@@ -64,7 +71,9 @@ class PaymentFacadeTest {
                 () -> assertThat(result.transactionKey()).isEqualTo("20250816:TR:abc123"),
                 () -> assertThat(result.maskedCardNo()).isEqualTo("1234-****-****-1451")
             );
-            verify(mockOrder).startPayment();
+
+            // TX-2: transactionKey 저장 검증
+            verify(paymentService).assignTransactionKey(1L, "20250816:TR:abc123");
         }
 
         @DisplayName("본인 주문이 아니면 예외가 발생한다")
@@ -73,7 +82,7 @@ class PaymentFacadeTest {
             // given
             Long userId = 999L;
             PaymentCommand command = new PaymentCommand(1L, CardType.SAMSUNG, "1234-5678-9814-1451");
-            given(orderService.getOrder(1L, userId)).willThrow(new CoreException(
+            given(paymentService.preparePayment(userId, command)).willThrow(new CoreException(
                 com.loopers.support.error.ErrorType.BAD_REQUEST, "본인의 주문만 조회할 수 있습니다."
             ));
 

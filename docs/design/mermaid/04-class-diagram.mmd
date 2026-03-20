@@ -119,8 +119,22 @@ classDiagram
             +requestPayment(PgPaymentRequest, userId) PgPaymentResponse
             +getPaymentStatus(txKey, userId) PgPaymentResponse
         }
+        class PgPaymentGateway {
+            <<infrastructure>>
+            +requestPayment(PgPaymentRequest, userId) PgPaymentResponse
+            +getPaymentStatus(txKey, userId) PgPaymentResponse
+            Note: @Bulkhead + @Retry
+        }
         class PaymentFacade {
-            결제 요청 + PG 연동 + 콜백 처리
+            TX 분리 패턴 + @CircuitBreaker + Fallback
+            +requestPayment() PaymentInfo
+            +handleCallback() void
+            +syncPaymentStatus() PaymentInfo
+        }
+        class PaymentPollingScheduler {
+            <<scheduler>>
+            +pollPendingPayments()
+            Note: 60초 주기 + fail-fast(3건)
         }
     }
 
@@ -152,5 +166,8 @@ classDiagram
     OrderService --> OrderItemModel
     PaymentFacade --> PaymentService
     PaymentFacade --> OrderService
-    PaymentFacade --> PgClient
+    PaymentFacade --> PgPaymentGateway
+    PgPaymentGateway --> PgClient
+    PaymentPollingScheduler --> PaymentService
+    PaymentPollingScheduler --> PaymentFacade
     PaymentService --> PaymentModel

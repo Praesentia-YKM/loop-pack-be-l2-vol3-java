@@ -1,7 +1,12 @@
 package com.loopers.application.payment;
 
+import com.loopers.application.order.OrderService;
+import com.loopers.domain.order.OrderModel;
 import com.loopers.domain.payment.PaymentModel;
 import com.loopers.domain.payment.PaymentRepository;
+import com.loopers.domain.payment.PaymentStatus;
+import com.loopers.domain.product.Money;
+import com.loopers.domain.payment.CardType;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +20,22 @@ import java.util.List;
 public class PaymentService {
 
     private final PaymentRepository paymentRepository;
+    private final OrderService orderService;
+
+    @Transactional
+    public PaymentModel preparePayment(Long userId, PaymentCommand command) {
+        OrderModel order = orderService.getOrder(command.orderId(), userId);
+        order.startPayment();
+
+        PaymentModel payment = new PaymentModel(
+            order.getId(),
+            userId,
+            command.cardType(),
+            command.maskedCardNo(),
+            order.finalAmount()
+        );
+        return paymentRepository.save(payment);
+    }
 
     @Transactional
     public PaymentModel save(PaymentModel payment) {
@@ -36,5 +57,16 @@ public class PaymentService {
     @Transactional(readOnly = true)
     public List<PaymentModel> getByOrderId(Long orderId) {
         return paymentRepository.findAllByOrderId(orderId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<PaymentModel> getPendingPayments() {
+        return paymentRepository.findAllByStatus(PaymentStatus.PENDING);
+    }
+
+    @Transactional
+    public void assignTransactionKey(Long paymentId, String transactionKey) {
+        PaymentModel payment = getById(paymentId);
+        payment.assignTransactionKey(transactionKey);
     }
 }

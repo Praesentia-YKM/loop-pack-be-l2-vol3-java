@@ -49,6 +49,15 @@ public class PaymentV1Controller implements PaymentV1ApiSpec {
         return ApiResponse.success(responses);
     }
 
+    @PostMapping("/api/v1/payments/{paymentId}/sync")
+    public ApiResponse<PaymentV1Dto.PaymentResponse> syncPaymentStatus(
+        @LoginMember MemberModel member,
+        @PathVariable Long paymentId
+    ) {
+        PaymentInfo info = paymentFacade.syncPaymentStatus(paymentId);
+        return ApiResponse.success(PaymentV1Dto.PaymentResponse.from(info));
+    }
+
     @PostMapping("/api/v1/payments/callback")
     @Override
     public ApiResponse<Object> handleCallback(
