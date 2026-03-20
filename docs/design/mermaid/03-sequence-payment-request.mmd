@@ -1,0 +1,47 @@
+sequenceDiagram
+    participant C as Customer
+    participant Ctrl as PaymentV1Controller
+    participant PF as PaymentFacade
+    participant OS as OrderService
+    participant PS as PaymentService
+    participant PG as PgClient (RestTemplate)
+    participant Sim as pg-simulator (외부)
+
+    C->>Ctrl: 결제 요청 (POST /api/v1/payments)
+    Note over Ctrl: @LoginMember 인증
+
+    activate PF
+    rect rgb(230, 240, 255)
+        Note right of PF: @Transactional
+        PF->>OS: getOrder(orderId, userId)
+        OS-->>PF: OrderModel (상태: CREATED)
+        PF->>PF: order.startPayment()
+        Note over PF: 주문 상태 → PAYMENT_PENDING
+
+        PF->>PF: PaymentModel 생성 (PENDING)
+        Note over PF: maskedCardNo, order.finalAmount()
+        PF->>PS: save(payment)
+        PS-->>PF: PaymentModel (id 채번)
+
+        PF->>PG: requestPayment(pgRequest, userId)
+        Note over PG: X-USER-ID 헤더 설정
+        PG->>Sim: POST /api/v1/payments
+        Note over Sim: 요청 지연: 100ms~500ms<br/>성공률: 60%
+
+        alt PG 요청 성공
+            Sim-->>PG: {transactionKey, status: PENDING}
+            PG-->>PF: PgPaymentResponse
+            PF->>PF: payment.assignTransactionKey(txKey)
+        else PG 요청 실패 / 타임아웃
+            Sim-->>PG: 에러 또는 타임아웃
+            PG-->>PF: Exception
+            PF-->>C: PG_REQUEST_FAILED (502)
+            Note over PF: 트랜잭션 롤백<br/>주문 상태 CREATED로 복원
+        end
+    end
+    deactivate PF
+
+    PF-->>C: 200 OK {paymentId, transactionKey, status: PENDING}
+
+    Note over Sim: 비동기 처리 (1s~5s)
+    Note over Sim: 성공 70% / 한도초과 20% / 잘못된카드 10%

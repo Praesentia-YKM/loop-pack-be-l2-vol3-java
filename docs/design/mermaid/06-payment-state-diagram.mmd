@@ -1,0 +1,30 @@
+%% 결제 도메인 상태 전이 다이어그램
+%% OrderStatus와 PaymentStatus의 연동 관계
+
+stateDiagram-v2
+    state "Order 상태" as OrderState {
+        [*] --> CREATED : 주문 생성
+        CREATED --> PAYMENT_PENDING : startPayment()
+        PAYMENT_PENDING --> CONFIRMED : confirmPayment()
+        PAYMENT_PENDING --> PAYMENT_FAILED : failPayment()
+        PAYMENT_FAILED --> PAYMENT_PENDING : startPayment() [재결제]
+        PAYMENT_FAILED --> CANCELLED : cancel()
+        CONFIRMED --> SHIPPING : ship()
+        SHIPPING --> DELIVERED : deliver()
+    }
+
+    state "Payment 상태" as PaymentState {
+        [*] --> PENDING : 결제 요청 접수
+        PENDING --> SUCCESS : markSuccess() [PG 콜백]
+        PENDING --> FAILED : markFailed() [PG 콜백]
+        SUCCESS --> SUCCESS : markSuccess() [멱등]
+        FAILED --> FAILED : markFailed() [멱등]
+    }
+
+    note right of OrderState
+        Order와 Payment 연동:
+        - requestPayment → CREATED→PAYMENT_PENDING + PENDING 생성
+        - SUCCESS 콜백 → SUCCESS + PAYMENT_PENDING→CONFIRMED
+        - FAILED 콜백 → FAILED + PAYMENT_PENDING→PAYMENT_FAILED
+        - 재결제 → PAYMENT_FAILED→PAYMENT_PENDING + 새 PENDING 생성
+    end note

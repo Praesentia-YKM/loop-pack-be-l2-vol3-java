@@ -59,6 +59,8 @@ classDiagram
         class OrderStatus {
             <<enumeration>>
             CREATED
+            PAYMENT_PENDING
+            PAYMENT_FAILED
             CONFIRMED
             SHIPPING
             DELIVERED
@@ -68,6 +70,9 @@ classDiagram
             -Long userId
             -OrderStatus status
             -Money totalAmount
+            +startPayment()
+            +confirmPayment()
+            +failPayment()
         }
         class OrderItemModel {
             -Long orderId
@@ -82,11 +87,51 @@ classDiagram
         }
     }
 
+    namespace Payment {
+        class PaymentStatus {
+            <<enumeration>>
+            PENDING
+            SUCCESS
+            FAILED
+            CANCELLED
+        }
+        class CardType {
+            <<enumeration>>
+            SAMSUNG
+            KB
+            HYUNDAI
+        }
+        class PaymentModel {
+            -Long orderId
+            -Long userId
+            -CardType cardType
+            -String maskedCardNo
+            -Money amount
+            -PaymentStatus status
+            -String transactionKey
+            -String failureReason
+            +assignTransactionKey(String)
+            +markSuccess()
+            +markFailed(String)
+        }
+        class PgClient {
+            <<infrastructure>>
+            +requestPayment(PgPaymentRequest, userId) PgPaymentResponse
+            +getPaymentStatus(txKey, userId) PgPaymentResponse
+        }
+        class PaymentFacade {
+            결제 요청 + PG 연동 + 콜백 처리
+        }
+    }
+
     BrandModel *-- BrandName
     ProductModel *-- Money
     OrderModel *-- OrderStatus
     OrderModel *-- Money
     OrderItemModel *-- Money
+    PaymentModel *-- PaymentStatus
+    PaymentModel *-- CardType
+    PaymentModel *-- Money
 
     BrandFacade --> BrandService
     BrandService --> BrandModel
@@ -105,3 +150,7 @@ classDiagram
     OrderFacade --> StockService
     OrderService --> OrderModel
     OrderService --> OrderItemModel
+    PaymentFacade --> PaymentService
+    PaymentFacade --> OrderService
+    PaymentFacade --> PgClient
+    PaymentService --> PaymentModel
